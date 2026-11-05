@@ -218,3 +218,12 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- ir_movies_ptbr ---
+# Logs de consultas (privacidade): nunca versionar
+logs/
+# Coleta TMDB: dados brutos e checkpoints (o snapshot final em data/ e versionado)
+data/raw/
+data/checkpoints/
+# Configuracao local do Claude Code
+.claude/settings.local.json
