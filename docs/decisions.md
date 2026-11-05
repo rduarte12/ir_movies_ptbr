@@ -51,7 +51,7 @@ Regra: decisão `aceita` não se edita; para mudar, nova entrada com `Revoga: D-
 - **Decidido por:** R · **Status:** aceita
 
 ### D-010 · 2026-11-05 · Explicabilidade: 3 níveis sempre visíveis
-- **Decisão:** seção "Explicabilidade" mostra os 3 níveis ao mesmo tempo, para todos (sem "modo curioso").
+- **Decisão:** seção "Explicabilidade" mostra os 3 níveis ao mesmo tempo.
 - **Conteúdo dos níveis:** (1) palavras destacadas na sinopse; (2) barras de contribuição por palavra; (3) passo a passo (tokens → ignoradas → radicais → pesos → cosseno).
 - **Decidido por:** R (existência e visibilidade) · **Status:** aceita · conteúdo exato dos níveis: **proposta (C)**
 
@@ -61,30 +61,30 @@ Regra: decisão `aceita` não se edita; para mudar, nova entrada com `Revoga: D-
 
 ### D-012 · 2026-11-05 · Idiomas
 - **Decisão:** identificadores e arquivos em inglês; docstrings, comentários, docs e UI em PT-BR.
-- **Decidido por:** C · **Status:** proposta
+- **Decidido por:** C · **Status:** aceito
 
 ### D-013 · 2026-11-05 · Texto indexado
 - **Decisão:** `title + tagline + overview + genres`, concatenados. Sem keywords e sem elenco na v1 (keywords da TMDB estão em inglês; elenco traz nomes próprios). Sem peso por campo na v1.
-- **Possível experimento futuro:** peso maior para o título.
-- **Decidido por:** C · **Status:** proposta
+- **Possível experimento futuro:** inclusão de busca por autores e/ou key words -> dada uma query, a LLM decidi keywords.
+- **Decidido por:** C · **Modificado por:** R **Status:** aceita
 
 ### D-014 · 2026-11-05 · Pré-processamento PT-BR
 - **Decisão:** minúsculas → remoção de acentos (`unidecode`) → tokenização por regex de palavras → stopwords do NLTK PT (**também normalizadas sem acento**) + stopwords de consulta configuráveis (ex.: "qual", "filme") → stemmer **Snowball PT**.
 - **Pendente:** comparar RSLP × Snowball na Sprint 3 em exemplos reais e registrar a escolha final. Radicais aparecerão na UI, então legibilidade conta.
-- **Decidido por:** C · **Status:** proposta
+- **Decidido por:** C · **Status:** aceita
 
 ### D-015 · 2026-11-05 · Hiperparâmetros iniciais do TF-IDF
-- **Decisão:** `TfidfVectorizer` com `ngram_range=(1,1)`, `norm="l2"`, `smooth_idf=True`, `sublinear_tf=False`, `min_df=2` (ajustar após inspecionar vocabulário). Valores em `config.yaml`.
+- **Decisão:** `TfidfVectorizer` com `ngram_range=(1,1)`, `norm="l2"`, `smooth_idf=True`, `sublinear_tf=False`, `min_df=1` (ajustar após inspecionar vocabulário). Valores em `config.yaml`.
 - **Nota:** com normalização L2 em consulta e documento, cosseno = produto escalar, e a contribuição por termo é `q_t · d_t`.
-- **Decidido por:** C · **Status:** proposta
+- **Decidido por:** C · **Status:** Aceito
 
 ### D-016 · 2026-11-05 · Snapshot em parquet, versionado
-- **Decisão:** `data/movies_ptbr_YYYYMMDD.parquet` + `data/snapshot_meta.json` no git (sem Git LFS). Se > 50 MB, reavaliar.
-- **Decidido por:** C · **Status:** proposta
+- **Decisão:** `data/movies_ptbr_YYYYMMDD.parquet` + `data/snapshot_meta.json` no git (sem Git LFS).
+- **Decidido por:** C · **Status:** Aceito
 
 ### D-017 · 2026-11-05 · Segredos
 - **Decisão:** token de leitura da TMDB em `.env` (`TMDB_READ_ACCESS_TOKEN`), enviado em header `Authorization: Bearer`. `.env.example` versionado. O Claude Code não lê `.env` (regra de permissão).
-- **Decidido por:** C · **Status:** proposta
+- **Decidido por:** C · **Status:** aceita
 
 ### D-018 · 2026-11-05 · Processo de desenvolvimento com IA
 - **Decisão:** uma sprint por sessão; planejar antes de implementar; branch e PR por sprint; commits pequenos; diário por sprint; tag `sprint-NN`; `git add/commit/push` exigem aprovação.
@@ -96,8 +96,8 @@ Regra: decisão `aceita` não se edita; para mudar, nova entrada com `Revoga: D-
 
 | ID | Questão | Quando resolver |
 |---|---|---|
-| Q-001 | Como persistir o log quando rodar no Colab (baixar ao final? espelhar no Drive?) | Sprint 5 |
-| Q-002 | Versão do Python (igual à do Colab) | Sprint 0 |
-| Q-003 | RSLP × Snowball | Sprint 3 |
-| Q-004 | `min_df` e stopwords de consulta ("filme", "filmes"...) | Sprint 4 |
-| Q-005 | Nome público do app | Sprint 6 |
+| Q-001 | Como persistir o log quando rodar no Colab (baixar ao final? espelhar no Drive?) | Sprint 5 | Salvar no colab. EU baixo o arquivo depois manualmente
+| Q-002 | Versão do Python (igual à do Colab) | Sprint 0 | Sim
+| Q-003 | RSLP × Snowball | Sprint 3 | Usar Snowball
+| Q-004 | `min_df` e stopwords de consulta ("filme", "filmes"...) | Sprint 4 | min_df=1 e remover stopwords tradicionais (manter filme, filmes, film e etc...)
+| Q-005 | Nome público do app | Sprint 6 | A ser decedido
