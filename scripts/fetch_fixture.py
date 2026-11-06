@@ -72,7 +72,8 @@ def analyze(data: dict) -> None:
     print(f"\nGêneros: {', '.join(genres)}")
 
     keywords = [k["name"] for k in data.get("keywords", {}).get("keywords", [])]
-    print(f"Keywords ({len(keywords)}): {', '.join(keywords[:10])}{'...' if len(keywords) > 10 else ''}")
+    suffix = "..." if len(keywords) > 10 else ""
+    print(f"Keywords ({len(keywords)}): {', '.join(keywords[:10])}{suffix}")
 
     cast = data.get("credits", {}).get("cast", [])
     print(f"Elenco (top 5): {', '.join(c['name'] for c in cast[:5])}")
