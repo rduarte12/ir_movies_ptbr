@@ -24,6 +24,7 @@ import pytest
 
 import ir_movies
 from ir_movies.config import load_config
+from ir_movies.index.tfidf import TermContribution
 from ir_movies.query.types import MAX_QUERY_CHARS, SearchResult
 from ir_movies.ui import format as ui_format
 from ir_movies.ui import view
@@ -52,6 +53,10 @@ QUERY_WITH_HITS = "robô apaixonado"
 QUERY_ONLY_STOPWORDS = "o de a que"
 QUERY_NOT_IN_CORPUS = "xyzzyx qwertyuiop"
 QUERY_PARTIALLY_OOV = "robô xyzzyx"
+# "ilha" aparece duas vezes na sinopse do filme 5 e "segredos" uma: as duas
+# palavras casam no mesmo filme com contribuições diferentes, que é o caso de
+# que o nível 1 precisa para mostrar mais de uma faixa de cor.
+QUERY_WITH_TWO_BANDS = "ilha segredos"
 
 # Filme do corpus de brinquedo sem pôster e sem duração (ver tests/fakes.py).
 MOVIE_WITHOUT_POSTER = 5
@@ -91,6 +96,23 @@ class BrokenService:
 
     def log_click(self, *args, **kwargs):
         raise RuntimeError("falha simulada no log")
+
+
+def synthetic_term(stem: str, contribution: float, idf: float = 2.0) -> TermContribution:
+    """Contribuição de termo com valores escolhidos à mão.
+
+    Serve aos casos que o corpus de brinquedo não produz — por exemplo uma soma
+    de produtos arredondados diferente da soma exata, ou um IDF acima do limiar
+    de "palavra rara".
+    """
+    return TermContribution(
+        stem=stem,
+        surface_forms=[stem],
+        idf=idf,
+        q_weight=contribution,
+        d_weight=1.0,
+        contribution=contribution,
+    )
 
 
 def score_in_caption(caption: str) -> str:
@@ -169,30 +191,168 @@ class TestBuildApp:
 
 
 def wired_fn(demo: gr.Blocks, name: str):
-    """O manipulador que ``build_app`` registrou no Gradio, pelo nome.
+    """Devolve o evento que ``build_app`` registrou no Gradio, pelo nome do
+    manipulador.
 
-    Chamar a função registrada — e não a de ``view`` — é o que prova que a
-    ligação dos eventos existe e que o número de saídas casa com o número de
-    componentes de saída. Uma troca de ordem nos ``outputs`` passaria batida
-    por qualquer teste que só chamasse ``view``.
+    Só localiza o evento: não confere nada. Quem confere a ligação é
+    ``assert_output_wiring``, que casa cada valor devolvido com o componente da
+    mesma posição em ``event.outputs``.
     """
     found = [fn for fn in demo.fns.values() if getattr(fn.fn, "__name__", "") == name]
     assert found, f"nenhum evento registrado com o manipulador {name}"
     return found[0]
 
 
+# Marca que aparece **apenas** no conteúdo daquele componente de saída. É o que
+# permite afirmar que o valor chegou ao componente certo: se dois valores
+# trocarem de lugar no retorno do manipulador, a marca não casa. Sem isso, a
+# troca passaria verde e apareceria projetada na parede — a grade na caixa de
+# mensagem, o nível 1 no painel de detalhes.
+PANEL_MARKERS = {
+    "fu-details-panel": "fu-details-block",
+    "fu-level-1": "fu-block-level1",
+    "fu-level-2": "fu-block-level2",
+    "fu-level-3": "fu-block-level3",
+}
+
+
+def assert_output_wiring(event, returned) -> None:
+    """Confere que cada valor devolvido casa com o componente da mesma posição.
+
+    Grade e estado são reconhecidos pela **forma** do valor (lista de pares de
+    texto; ``SearchResult``). Os blocos de HTML são reconhecidos pela marca que
+    só eles têm, e ainda se exige que **não** contenham a marca de nenhum outro.
+    """
+    assert len(returned) == len(event.outputs), (
+        "o manipulador tem de devolver um valor por componente de saída"
+    )
+    seen = []
+    for component, value in zip(event.outputs, returned, strict=True):
+        elem_id = getattr(component, "elem_id", None)
+        seen.append(elem_id)
+
+        if isinstance(component, gr.Gallery):
+            assert isinstance(value, list), f"{elem_id}: a grade recebe uma lista de itens"
+            assert all(
+                isinstance(item, tuple)
+                and len(item) == 2
+                and all(isinstance(piece, str) for piece in item)
+                for item in value
+            ), f"{elem_id}: cada item da grade é um par (imagem, legenda)"
+            continue
+
+        if isinstance(component, gr.State):
+            assert value is None or isinstance(value, SearchResult), (
+                f"{elem_id}: o estado guarda o resultado da busca"
+            )
+            continue
+
+        assert isinstance(value, str), f"{elem_id}: este componente recebe HTML (texto)"
+
+        if elem_id in PANEL_MARKERS:
+            assert PANEL_MARKERS[elem_id] in value, f"{elem_id} não recebeu o seu próprio conteúdo"
+            for other_id, other_marker in PANEL_MARKERS.items():
+                if other_id != elem_id:
+                    assert other_marker not in value, f"{elem_id} recebeu o conteúdo de {other_id}"
+        else:
+            assert elem_id == "fu-message", f"componente de saída inesperado: {elem_id}"
+            assert value == "" or "fu-message" in value, (
+                "a caixa de mensagem recebe a mensagem de estado, ou nada"
+            )
+    return seen
+
+
 class TestWiredEvents:
-    def test_search_event_is_wired_to_every_output(self, service, cfg):
+    def test_search_outputs_are_the_expected_components_in_order(self, service, cfg):
+        demo = build_app(service, cfg)
+        event = wired_fn(demo, "on_search")
+        identifiers = [getattr(c, "elem_id", None) for c in event.outputs]
+        assert identifiers == [
+            "fu-results",
+            "fu-message",
+            "fu-details-panel",
+            "fu-level-1",
+            "fu-level-2",
+            "fu-level-3",
+            None,  # gr.State com o resultado da busca
+        ]
+
+    def test_search_event_sends_each_value_to_its_own_component(self, service, cfg):
+        """A1: pega uma troca de ordem no retorno do manipulador."""
         demo = build_app(service, cfg)
         event = wired_fn(demo, "on_search")
         returned = event.fn(QUERY_WITH_HITS, "sessao-1")
         assert len(returned) == len(event.outputs) == 7
+        assert_output_wiring(event, returned)
         assert isinstance(returned[-1], SearchResult)
 
-    def test_select_event_is_wired_to_the_four_panels(self, service, cfg):
+    def test_search_event_wiring_holds_when_there_is_a_state_message(self, service, cfg):
+        """Com consulta vazia a mensagem é preenchida e os painéis, de espera."""
         demo = build_app(service, cfg)
-        assert wired_fn(demo, "on_select").outputs, "o clique precisa de saídas"
-        assert len(wired_fn(demo, "on_select").outputs) == 4
+        event = wired_fn(demo, "on_search")
+        returned = event.fn("", "sessao-1")
+        assert returned[0] == []
+        assert SPEC_EMPTY_QUERY in returned[1]
+        assert_output_wiring(event, returned)
+
+    def test_select_outputs_are_the_four_panels_in_order(self, service, cfg):
+        demo = build_app(service, cfg)
+        event = wired_fn(demo, "on_select")
+        identifiers = [getattr(c, "elem_id", None) for c in event.outputs]
+        assert identifiers == [
+            "fu-details-panel",
+            "fu-level-1",
+            "fu-level-2",
+            "fu-level-3",
+        ]
+
+    def test_select_event_sends_each_panel_to_its_own_component(self, service, cfg):
+        """A1: pega uma troca de ordem no retorno do manipulador do clique."""
+        demo = build_app(service, cfg)
+        gallery = next(b for b in demo.blocks.values() if isinstance(b, gr.Gallery))
+        search = wired_fn(demo, "on_search")
+        select = wired_fn(demo, "on_select")
+        result = search.fn("robô tubarão espaço chuva ilha", "sessao-1")[-1]
+
+        event_data = gr.SelectData(
+            target=gallery, data={"index": 1, "value": None, "selected": True}
+        )
+        returned = select.fn("sessao-1", result, event_data)
+
+        assert len(returned) == len(select.outputs) == 4
+        assert_output_wiring(select, returned)
+
+    def test_the_wiring_check_rejects_a_swapped_return(self, service, cfg):
+        """Prova que ``assert_output_wiring`` não passa por não enxergar nada.
+
+        Troca dois valores de lugar no retorno do manipulador e exige que a
+        conferência falhe. Sem isto, a conferência poderia estar vazia por
+        dentro e ninguém saberia.
+        """
+        demo = build_app(service, cfg)
+        event = wired_fn(demo, "on_search")
+        returned = list(event.fn(QUERY_WITH_HITS, "sessao-1"))
+
+        # Grade trocada com a caixa de mensagem.
+        swapped = list(returned)
+        swapped[0], swapped[1] = swapped[1], swapped[0]
+        with pytest.raises(AssertionError):
+            assert_output_wiring(event, swapped)
+
+        # Painel de detalhes trocado com o nível 1.
+        swapped = list(returned)
+        swapped[2], swapped[3] = swapped[3], swapped[2]
+        with pytest.raises(AssertionError):
+            assert_output_wiring(event, swapped)
+
+        # Níveis 2 e 3 trocados entre si.
+        swapped = list(returned)
+        swapped[4], swapped[5] = swapped[5], swapped[4]
+        with pytest.raises(AssertionError):
+            assert_output_wiring(event, swapped)
+
+        # E, sem troca nenhuma, passa.
+        assert_output_wiring(event, returned)
 
     def test_select_event_is_registered_on_the_gallery(self, service, cfg):
         demo = build_app(service, cfg)
@@ -287,7 +447,7 @@ class TestStates:
         result = view.search_screen(service, cfg, QUERY_WITH_HITS).result
         for index in (-1, 999, None):
             panels = view.select_panels(service, cfg, result, index, "s1")
-            assert panels.details == ""
+            assert panels.details == view.waiting_panels().details
         assert service.logger.events == []
 
     def test_states_are_decided_without_exceptions(self, service, cfg):
@@ -443,8 +603,13 @@ class TestLevelThreeNumbers:
             )
             assert row in screen.panels.level3
 
-    def test_three_decimals_everywhere(self, service, cfg):
-        """ui_spec.md secao 3: a mesma convenção em todos os níveis."""
+    def test_three_decimals_for_scores_and_contributions(self, service, cfg):
+        """ui_spec.md secao 3: a mesma convenção em todos os níveis.
+
+        A convenção vale para **pontuação e contribuição** — os números que a
+        Explicabilidade explica. A nota da TMDB, no painel de detalhes, é a
+        única exceção declarada (D-062) e tem teste próprio.
+        """
         assert cfg["ui"]["score_decimals"] == 3
         screen = view.search_screen(service, cfg, QUERY_WITH_HITS)
         numbers = re.findall(r"\d+,\d+", screen.panels.level2 + screen.panels.level3)
@@ -452,10 +617,53 @@ class TestLevelThreeNumbers:
         assert all(len(value.split(",")[1]) == 3 for value in numbers)
         assert len(score_in_caption(screen.gallery[0][1]).split(",")[1]) == 3
 
+    def test_the_tmdb_rating_is_the_only_exception_in_the_details_panel(self, service, cfg):
+        """D-062: a nota da TMDB tem 1 casa; "6,100" não seria nota de filme.
+
+        O painel de detalhes não mostra pontuação nenhuma, então não há como
+        confundir as duas convenções na mesma tela.
+        """
+        movie = service.get_movie(1)
+        details = view.details_html(movie, cfg)
+        numbers = re.findall(r"\d+,\d+", details)
+        assert numbers, "o painel tem de mostrar a nota da TMDB"
+        assert all(len(value.split(",")[1]) == 1 for value in numbers)
+        assert ui_format.rating_label(movie.vote_average, movie.vote_count) in details
+        assert ui_format.rating_label(6.0, 10) == "6,0 (10 votos)"
+
     def test_comma_is_the_decimal_separator(self):
         assert ui_format.format_score(0.3842) == "0,384"
         assert ui_format.format_score(1.0) == "1,000"
         assert ui_format.format_score(0.0005) == "0,001"
+
+    def test_the_total_is_the_exact_sum_not_the_sum_of_rounded_values(self, cfg):
+        """A escolha central de D-054, fixada por teste.
+
+        Três contribuições de 0,1234: cada linha aparece como 0,123, cuja soma
+        é 0,369; a soma exata é 0,3702, que aparece como 0,370. A tela tem de
+        mostrar a exata — é o que a mantém igual à pontuação da legenda. O
+        corpus de brinquedo não produz essa diferença, então ela é construída
+        aqui de propósito.
+        """
+        decimals = cfg["ui"]["score_decimals"]
+        parts = [synthetic_term(f"t{i}", 0.1234) for i in range(3)]
+
+        exact = ui_format.format_score(sum(p.contribution for p in parts), decimals)
+        rounded = ui_format.format_score(
+            sum(round(p.contribution, decimals) for p in parts), decimals
+        )
+        assert exact == "0,370"
+        assert rounded == "0,369"
+        assert exact != rounded, "o caso que distingue as duas políticas tem de existir"
+
+        table = view.level3_table_html(parts, cfg)
+        assert level3_total(table) == exact
+        assert level3_total(table) != rounded
+        assert view.level3_sum_html(parts, cfg).count(exact) == 1
+
+    def test_the_rounding_note_is_shown_because_of_that_choice(self, cfg):
+        parts = [synthetic_term(f"t{i}", 0.1234) for i in range(3)]
+        assert "arredondados para 3 casas decimais" in view.level3_table_html(parts, cfg)
 
 
 # --- Níveis 1, 2 e 3: conteúdo ---
@@ -488,6 +696,32 @@ class TestExplainabilityPanels:
         without_marks = re.sub(r"</?mark[^>]*>", "", screen.panels.level1)
         assert html.escape(movie.overview) in without_marks
 
+    def test_level1_uses_more_than_one_colour_band(self, service, cfg):
+        """D-051: se a sinopse sair toda da mesma cor, o nível 1 não explica nada.
+
+        Com contribuições diferentes, duas palavras não podem cair na mesma
+        faixa — é o que distingue "esta palavra pesou mais" de um destaque
+        decorativo.
+        """
+        screen = view.search_screen(service, cfg, QUERY_WITH_TWO_BANDS)
+        parts = service.contributions(screen.result.effective_query, screen.result.hits[0].doc_id)
+        assert len({part.contribution for part in parts}) >= 2, (
+            "o caso precisa de duas contribuições diferentes"
+        )
+        bands = set(re.findall(r'<mark class="hl-(\d)">', screen.panels.level1))
+        assert len(bands) >= 2, f"nível 1 saiu com uma faixa só: {bands}"
+
+    def test_level1_gives_the_strongest_band_to_the_largest_contribution(self, cfg):
+        """Construído à mão para fixar a direção da escala, não só a variedade."""
+        movie = FakeSearchService.from_toy().get_movie(1)
+        parts = [synthetic_term("rob", 0.6), synthetic_term("cientist", 0.05)]
+        level1 = view.level1_html(movie, parts, cfg)
+        marks = re.findall(r'<mark class="hl-(\d)">([^<]+)</mark>', level1)
+        bands = {word.lower(): int(band) for band, word in marks}
+        assert bands["robô"] == cfg["ui"]["highlight_levels"]
+        assert bands["cientista"] == 1
+        assert bands["robô"] > bands["cientista"]
+
     def test_level2_always_shows_a_numeric_label(self, service, cfg):
         """ui_spec.md secao 3: nada depende só de cor."""
         screen = view.search_screen(service, cfg, QUERY_WITH_HITS)
@@ -497,12 +731,42 @@ class TestExplainabilityPanels:
         assert bars == values
 
     def test_level2_bar_widths_are_proportional_to_the_contribution(self, service, cfg):
+        """A largura de cada barra é a razão com a maior contribuição (D-052).
+
+        Comparar cada largura com a razão esperada, e não só a ordem: barras
+        todas em 100% satisfariam "a maior é 100" e "estão em ordem".
+        """
         screen = view.search_screen(service, cfg, QUERY_WITH_HITS)
+        parts = service.contributions(screen.result.effective_query, screen.result.hits[0].doc_id)
+        largest = max(part.contribution for part in parts)
         widths = [float(w) for w in re.findall(r"width: ([\d.]+)%", screen.panels.level2)]
-        assert widths
+
+        assert len(widths) == len(parts)
+        for width, part in zip(widths, parts, strict=True):
+            esperada = ui_format.bar_width(part.contribution, largest)
+            assert width == pytest.approx(round(esperada, 1), abs=0.05)
+            if esperada > ui_format.MIN_BAR_WIDTH_PERCENT:
+                assert width == pytest.approx(part.contribution / largest * 100, abs=0.05)
+        assert len(set(widths)) >= 2, "contribuições diferentes, larguras diferentes"
         assert max(widths) == 100.0
-        assert all(0 < w <= 100 for w in widths)
-        assert widths == sorted(widths, reverse=True)
+
+    def test_bar_width_is_the_ratio_with_a_floor(self):
+        assert ui_format.bar_width(0.5, 0.5) == 100.0
+        assert ui_format.bar_width(0.25, 0.5) == 50.0
+        assert ui_format.bar_width(0.05, 0.5) == 10.0
+
+    def test_bar_width_floor_keeps_a_tiny_contribution_visible(self):
+        """D-052: contribuição ínfima vira barra mínima, nunca barra nenhuma.
+
+        O número ao lado diz quanto foi de verdade, então o piso não engana.
+        """
+        assert ui_format.MIN_BAR_WIDTH_PERCENT == 2.0
+        assert ui_format.bar_width(0.000001, 1.0) == 2.0
+        assert ui_format.bar_width(0.0, 1.0) == 2.0
+        assert ui_format.bar_width(0.5, 0.0) == 2.0
+
+    def test_bar_width_never_exceeds_the_track(self):
+        assert ui_format.bar_width(2.0, 1.0) == 100.0
 
     def test_level2_shows_a_rarity_badge_per_word(self, service, cfg):
         screen = view.search_screen(service, cfg, QUERY_WITH_HITS)
@@ -525,7 +789,8 @@ class TestExplainabilityPanels:
         assert parts[0].surface_forms[0] == "apaixonado"
         assert ">apaixonado<" in screen.panels.level2
 
-    def test_level3_lists_the_five_steps(self, service, cfg):
+    def test_level3_lists_the_six_steps(self, service, cfg):
+        """ui_spec.md secao 1.5 pede os passos de (a) até (f)."""
         screen = view.search_screen(service, cfg, "o robô apaixonado xyzzyx")
         level3 = screen.panels.level3
         assert "a) Sua pergunta" in level3
@@ -533,6 +798,28 @@ class TestExplainabilityPanels:
         assert "c) Palavras reduzidas ao radical" in level3
         assert "d) Palavras que não existem no acervo" in level3
         assert "e) Conta de cada radical" in level3
+        assert "f) Soma dos produtos = pontuação" in level3
+        assert level3.count('<li><span class="fu-step-label">') == 6
+
+    def test_step_f_states_that_the_sum_is_the_score(self, service, cfg):
+        """O passo (f) é o ponto de chegada: a soma **é** a pontuação."""
+        screen = view.search_screen(service, cfg, QUERY_WITH_HITS)
+        hit = screen.result.hits[0]
+        expected = ui_format.format_score(hit.score, cfg["ui"]["score_decimals"])
+        assert "Pontuação deste filme = " in screen.panels.level3
+        assert f'<span class="fu-score-value">{expected}</span>' in screen.panels.level3
+        assert score_in_caption(screen.gallery[0][1]) == expected
+
+    def test_step_f_and_the_table_total_show_the_same_number(self, service, cfg):
+        screen = view.search_screen(service, cfg, QUERY_WITH_HITS)
+        shown = re.search(r'class="fu-score-value">([^<]+)<', screen.panels.level3)
+        assert shown
+        assert shown.group(1) == level3_total(screen.panels.level3)
+
+    def test_step_f_without_matching_words(self, cfg):
+        assert "Nenhuma palavra da sua pergunta aparece neste filme." in view.level3_sum_html(
+            [], cfg
+        )
 
     def test_level3_shows_the_question_the_stopwords_and_the_stems(self, service, cfg):
         screen = view.search_screen(service, cfg, "o robô apaixonado")
@@ -579,6 +866,66 @@ class TestExplainabilityPanels:
         for jargon in ["IDF", "idf", "TF-IDF", "cosseno", "cosine", "vetor", "token"]:
             assert jargon not in rendered, f"jargão sem explicação na tela: {jargon}"
         assert "raridade da palavra no acervo" in screen.panels.level2
+
+
+# --- Faixas de cor do destaque (D-051) ---
+
+
+class TestHighlightLevels:
+    """``highlight_level`` traduz intensidade contínua em faixa de cor.
+
+    Sem estes testes, "sempre a faixa mais forte" e "sempre a mais fraca"
+    passam verdes: a sinopse inteira sai de uma cor só e nada avisa.
+    """
+
+    @pytest.mark.parametrize(
+        ("intensity", "expected"),
+        [
+            (0.0, 1),
+            (0.2499, 1),
+            (0.25, 2),
+            (0.4999, 2),
+            (0.5, 3),
+            (0.7499, 3),
+            (0.75, 4),
+            (0.999, 4),
+            (1.0, 4),
+        ],
+    )
+    def test_four_bands_split_the_unit_interval_in_quarters(self, intensity, expected):
+        assert ui_format.highlight_level(intensity, 4) == expected
+
+    def test_each_band_is_reachable(self):
+        reached = {ui_format.highlight_level(value / 100, 4) for value in range(101)}
+        assert reached == {1, 2, 3, 4}
+
+    def test_intensity_out_of_range_is_clamped(self):
+        assert ui_format.highlight_level(-5.0, 4) == 1
+        assert ui_format.highlight_level(9.0, 4) == 4
+
+    def test_never_above_the_configured_number_of_bands(self):
+        for levels in (1, 2, 3, 4, 8):
+            values = [ui_format.highlight_level(v / 50, levels) for v in range(51)]
+            assert min(values) >= 1
+            assert max(values) == levels
+
+    def test_a_single_band_means_everything_in_the_same_class(self):
+        assert ui_format.highlight_level(0.1, 1) == 1
+        assert ui_format.highlight_level(1.0, 1) == 1
+
+    def test_zero_bands_is_treated_as_one(self):
+        assert ui_format.highlight_level(0.9, 0) == 1
+
+    def test_bands_never_decrease_with_intensity(self):
+        values = [ui_format.highlight_level(v / 100, 4) for v in range(101)]
+        assert values == sorted(values)
+
+    def test_the_css_defines_a_class_for_every_band(self, cfg):
+        """Faixa sem classe no CSS sairia sem destaque nenhum na tela."""
+        from ir_movies.ui.styles import CSS
+
+        for band in range(1, int(cfg["ui"]["highlight_levels"]) + 1):
+            assert f"mark.hl-{band}" in CSS
 
 
 # --- Rodapé e segurança do HTML ---

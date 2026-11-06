@@ -21,6 +21,7 @@ from ir_movies.explain import highlight
 from ir_movies.query.types import SearchResult
 from ir_movies.ui import texts
 from ir_movies.ui.format import (
+    bar_width,
     caption,
     format_score,
     highlight_level,
@@ -199,13 +200,27 @@ def details_html(movie: Movie, cfg: dict) -> str:
         f'<p class="fu-hint"><em>{html.escape(movie.tagline)}</em></p>' if movie.tagline else ""
     )
     return (
-        '<div class="fu-card fu-details">'
+        '<div class="fu-card fu-details-block fu-details">'
         f"<div>{_poster_block(movie, size)}</div>"
         "<div>"
         f"<h2>{html.escape(movie.title)}{year}</h2>"
         f"{tagline}"
         f"<dl>{rows}</dl>"
         "</div></div>"
+    )
+
+
+def _level_block(number: int, title: str, body: str) -> str:
+    """Moldura de um nível da Explicabilidade, usada em todos os estados.
+
+    A classe ``fu-block-levelN`` identifica o bloco cheio ou vazio. Um teste a
+    usa para conferir que o conteúdo de cada nível chega ao componente daquele
+    nível, e não ao de outro.
+    """
+    return (
+        f'<div class="fu-level fu-block-level{number}">'
+        f'<p class="fu-level-title">{html.escape(title)}</p>'
+        f"{body}</div>"
     )
 
 
@@ -225,12 +240,11 @@ def level1_html(movie: Movie, contributions: Sequence[TermContribution], cfg: di
             level = highlight_level(intensity, levels)
             pieces.append(f'<mark class="hl-{level}">{escaped}</mark>')
     body = "".join(pieces)
-    return (
-        '<div class="fu-level">'
-        f'<p class="fu-level-title">{html.escape(texts.LEVEL1_TITLE)}</p>'
+    return _level_block(
+        1,
+        texts.LEVEL1_TITLE,
         f'<p class="fu-hint">{html.escape(texts.LEVEL1_HINT)}</p>'
-        f'<p class="fu-highlighted">{body}</p>'
-        "</div>"
+        f'<p class="fu-highlighted">{body}</p>',
     )
 
 
@@ -261,8 +275,7 @@ def level2_html(contributions: Sequence[TermContribution], cfg: dict) -> str:
         largest = max(term.contribution for term in contributions)
         rows = []
         for term in contributions:
-            share = (term.contribution / largest * 100) if largest > 0 else 0.0
-            width = max(2.0, min(100.0, share))
+            width = bar_width(term.contribution, largest)
             rows.append(
                 "<tr>"
                 f'<td class="fu-bar-word">{html.escape(word_label(term))}</td>'
@@ -276,11 +289,10 @@ def level2_html(contributions: Sequence[TermContribution], cfg: dict) -> str:
             f'<table class="fu-bars">{"".join(rows)}</table>'
             f'<p class="fu-note">{html.escape(texts.LEVEL2_RARITY_EXPLANATION)}</p>'
         )
-    return (
-        '<div class="fu-level">'
-        f'<p class="fu-level-title">{html.escape(texts.LEVEL2_TITLE)}</p>'
-        f'<p class="fu-hint">{html.escape(texts.LEVEL2_HINT)}</p>'
-        f"{body}</div>"
+    return _level_block(
+        2,
+        texts.LEVEL2_TITLE,
+        f'<p class="fu-hint">{html.escape(texts.LEVEL2_HINT)}</p>{body}',
     )
 
 
@@ -337,6 +349,25 @@ def level3_table_html(contributions: Sequence[TermContribution], cfg: dict) -> s
     )
 
 
+def level3_sum_html(contributions: Sequence[TermContribution], cfg: dict) -> str:
+    """Passo (f): a soma dos produtos **é** a pontuação do filme.
+
+    É o ponto de chegada da explicação inteira, e por isso é um passo próprio e
+    não só o rodapé da tabela do passo (e). O número é o mesmo nos dois lugares:
+    a soma em precisão cheia, arredondada só na exibição (D-054).
+    """
+    decimals = cfg["ui"]["score_decimals"]
+    if not contributions:
+        return f'<p class="fu-hint">{html.escape(texts.NO_MATCHED_WORDS)}</p>'
+    total = sum(term.contribution for term in contributions)
+    return (
+        '<p class="fu-sum">'
+        f"{html.escape(texts.LEVEL3_SCORE_LABEL)} = "
+        f'<span class="fu-score-value">{format_score(total, decimals)}</span>'
+        "</p>"
+    )
+
+
 def level3_html(result: SearchResult, contributions: Sequence[TermContribution], cfg: dict) -> str:
     """Passo a passo da pergunta até a pontuação (ui_spec.md secao 1.5, nível 3)."""
     trace = result.trace
@@ -357,30 +388,33 @@ def level3_html(result: SearchResult, contributions: Sequence[TermContribution],
             ),
             _step(texts.LEVEL3_STEP_OOV, _chips(result.oov_terms, "fu-chip-oov")),
             _step(texts.LEVEL3_STEP_TABLE, level3_table_html(contributions, cfg)),
+            _step(texts.LEVEL3_STEP_SUM, level3_sum_html(contributions, cfg)),
         ]
     )
-    return (
-        '<div class="fu-level">'
-        f'<p class="fu-level-title">{html.escape(texts.LEVEL3_TITLE)}</p>'
-        f'<ul class="fu-steps">{steps}</ul>'
-        "</div>"
-    )
+    return _level_block(3, texts.LEVEL3_TITLE, f'<ul class="fu-steps">{steps}</ul>')
 
 
 # --- Montagem dos painéis ---
+
+
+def _details_block(body: str) -> str:
+    """Moldura do painel de detalhes, usada em todos os estados.
+
+    A classe ``fu-details-block`` é o que identifica este painel, cheio ou
+    vazio: um teste a usa para conferir que o conteúdo do painel de detalhes
+    chega ao componente do painel de detalhes, e não ao de outro bloco.
+    """
+    return f'<div class="fu-card fu-details-block">{body}</div>'
 
 
 def waiting_panels() -> Panels:
     """Painéis antes da primeira busca: os três níveis já visíveis (D-010)."""
     hint = f'<p class="fu-hint">{html.escape(texts.WAITING_FOR_SEARCH)}</p>'
     return Panels(
-        details="",
-        level1=f'<div class="fu-level"><p class="fu-level-title">'
-        f"{html.escape(texts.LEVEL1_TITLE)}</p>{hint}</div>",
-        level2=f'<div class="fu-level"><p class="fu-level-title">'
-        f"{html.escape(texts.LEVEL2_TITLE)}</p>{hint}</div>",
-        level3=f'<div class="fu-level"><p class="fu-level-title">'
-        f"{html.escape(texts.LEVEL3_TITLE)}</p>{hint}</div>",
+        details=_details_block(hint),
+        level1=_level_block(1, texts.LEVEL1_TITLE, hint),
+        level2=_level_block(2, texts.LEVEL2_TITLE, hint),
+        level3=_level_block(3, texts.LEVEL3_TITLE, hint),
     )
 
 
@@ -403,7 +437,7 @@ def error_panels() -> Panels:
     """Painéis do estado "erro inesperado": mensagem genérica, nada técnico."""
     waiting = waiting_panels()
     return Panels(
-        details=message_html(STATE_UNEXPECTED_ERROR),
+        details=_details_block(message_html(STATE_UNEXPECTED_ERROR)),
         level1=waiting.level1,
         level2=waiting.level2,
         level3=waiting.level3,

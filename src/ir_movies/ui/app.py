@@ -69,7 +69,10 @@ def build_app(service: SearchServiceProtocol, cfg: dict) -> gr.Blocks:
         panels = view.select_panels(service, cfg, result, event.index, session_id)
         return panels.details, panels.level1, panels.level2, panels.level3
 
-    with gr.Blocks(title=str(ui_cfg["app_name"]), elem_id="filmusp-app") as demo:
+    # O ``elem_id`` é um identificador técnico, usado só pelo CSS: fica neutro
+    # de propósito, porque o nome público do app vive no ``config.yaml`` e não
+    # se repete no código (D-050).
+    with gr.Blocks(title=str(ui_cfg["app_name"]), elem_id="ir-movies-app") as demo:
         session_state = gr.State(value="")
         result_state = gr.State(value=None)
 
@@ -96,7 +99,10 @@ def build_app(service: SearchServiceProtocol, cfg: dict) -> gr.Blocks:
                 for example in _examples(cfg):
                     example_buttons.append((example, gr.Button(example, size="sm")))
 
-        message_box = gr.HTML(value="")
+        # Cada componente que recebe conteúdo tem ``elem_id`` próprio. Serve ao
+        # CSS e, sobretudo, aos testes: é por ele que se confere que cada valor
+        # devolvido pelo manipulador chega ao componente certo.
+        message_box = gr.HTML(value="", elem_id="fu-message")
 
         gr.HTML(f'<p class="fu-section-title">{texts.RESULTS_LABEL}</p>')
         gr.HTML(f'<p class="fu-hint">{texts.RESULTS_HINT}</p>')
@@ -107,20 +113,21 @@ def build_app(service: SearchServiceProtocol, cfg: dict) -> gr.Blocks:
             columns=int(ui_cfg["grid_columns"]),
             allow_preview=False,
             object_fit="contain",
+            elem_id="fu-results",
         )
 
         gr.HTML(f'<p class="fu-section-title">{texts.DETAILS_TITLE}</p>')
         waiting = view.waiting_panels()
-        details_box = gr.HTML(value=waiting.details)
+        details_box = gr.HTML(value=waiting.details, elem_id="fu-details-panel")
 
         gr.HTML(
             f'<p class="fu-section-title">{texts.EXPLAIN_TITLE}</p>'
             f'<p class="fu-hint">{texts.EXPLAIN_SUBTITLE}</p>'
         )
         # Os três níveis ficam sempre visíveis ao mesmo tempo (D-010).
-        level1_box = gr.HTML(value=waiting.level1)
-        level2_box = gr.HTML(value=waiting.level2)
-        level3_box = gr.HTML(value=waiting.level3)
+        level1_box = gr.HTML(value=waiting.level1, elem_id="fu-level-1")
+        level2_box = gr.HTML(value=waiting.level2, elem_id="fu-level-2")
+        level3_box = gr.HTML(value=waiting.level3, elem_id="fu-level-3")
 
         gr.HTML(view.footer_html(service))
 
