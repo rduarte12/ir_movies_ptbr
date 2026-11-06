@@ -11,10 +11,10 @@
 - `README.md`: o que é, Colab, plano B local, versões, dados, privacidade (aviso de log anônimo), testes, estrutura, licença e atribuição da TMDB.
 - `tests/test_readme.py` (6 testes): frase exata de atribuição, aviso de log anônimo, versões e arquivos de requirements, `snapshot_id` e links locais; cobertura de seções do roteiro de ensaio.
 - `docs/rehearsal_checklist.md`: roteiro do ensaio de 2 h, plano B local, teste com pessoas leigas e contingência de queda do Colab.
-- `docs/decisions_trilha_D.md`: decisões D-070 a D-077.
+- `docs/decisions.md`: decisões D-070 a D-077.
 - `docs/execution_plan.md`: marcada a caixa do README da Sprint 8.
 
-## Decisões (IDs em `decisions_trilha_D.md`)
+## Decisões (IDs em `docs/decisions.md`)
 - D-070 — Critério determinístico de seleção do acervo mínimo (`proposta`)
 - D-071 — Formato, determinismo e isolamento do acervo mínimo (`proposta`)
 - D-072 — Como o notebook 02 é executado no teste de fumaça (`proposta`)

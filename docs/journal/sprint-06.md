@@ -33,7 +33,7 @@ começando em 1 — o mesmo número que a legenda mostra.
 
 ## Decisões (IDs em `decisions.md`)
 
-Registradas em `docs/decisions_trilha_C.md`, para incorporação na faixa D-050 a D-069.
+Registradas em `docs/decisions.md`.
 
 - D-050 — Nome público do app: `FilmUSP` (resolve Q-005) (`aceita`)
 - D-055 — Componentes do Gradio: `Blocks` + `Gallery` de 5 colunas + `HTML` (`proposta`)

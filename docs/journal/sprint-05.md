@@ -10,7 +10,7 @@
 - Testes novos: `tests/test_query_rewriter.py`, `tests/test_query_snapshot_loader.py`, `tests/test_query_service.py`, `tests/test_logging_jsonl.py`. As classes de regra de `tests/test_contract.py` são reaproveitadas contra o serviço real.
 - Comentários nas seções `search` e `logging` de `config.yaml` (valores inalterados).
 
-## Decisões (IDs em `docs/decisions_trilha_A.md`)
+## Decisões (IDs em `docs/decisions.md`)
 - D-030 — Resolução de Q-001: log no disco do Colab, baixado à mão (`proposta`)
 - D-031 — Formato do `session_id` (`proposta`)
 - D-032 — Onde a latência é medida (`proposta`)

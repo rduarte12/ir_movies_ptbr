@@ -3,7 +3,7 @@
 Prova que "Run all" não quebra e que nenhum servidor é aberto, sem exigir
 dependência além das já fixadas em ``requirements-dev.txt``: o par jupytext é
 lido com ``jupytext`` e as células de código são executadas, em ordem, num
-subprocesso. Detalhes e limitações em ``docs/decisions_trilha_D.md`` (D-072).
+subprocesso. Detalhes e limitações em ``docs/decisions.md`` (D-072).
 
 Como o teste isola o ambiente:
 

@@ -40,7 +40,7 @@
 
 ## Decisões (IDs em `decisions.md`)
 
-Registradas em `docs/decisions_trilha_C.md`.
+Registradas em `docs/decisions.md`.
 
 - D-051 — Nível 1: intensidade do destaque linear sobre a maior contribuição (`proposta`)
 - D-052 — Nível 2: barras horizontais com rótulo numérico obrigatório (`proposta`)
