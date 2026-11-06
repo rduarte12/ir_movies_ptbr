@@ -1,0 +1,9 @@
+# Dependências do notebook 01 (coleta TMDB) — máquina local.
+# Decisão: D-021. Versões fixadas com Python 3.13.
+
+requests==2.34.2
+tenacity==9.2.1
+pandas==3.1.1
+pyarrow==26.0.1
+PyYAML==6.0.3
+python-dotenv==1.2.4

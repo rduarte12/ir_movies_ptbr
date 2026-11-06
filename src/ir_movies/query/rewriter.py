@@ -1,0 +1,1 @@
+"""Protocolo Rewriter e IdentityRewriter."""

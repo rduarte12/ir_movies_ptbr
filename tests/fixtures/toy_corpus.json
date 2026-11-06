@@ -1,0 +1,37 @@
+[
+  {
+    "id": 1,
+    "title": "O Robô Apaixonado",
+    "tagline": "Até máquinas podem amar",
+    "overview": "Em um futuro distante um robô desenvolvido para trabalho industrial descobre emoções humanas ao conhecer uma cientista brilhante que estuda inteligência artificial",
+    "genres": ["Ficção Científica", "Romance"]
+  },
+  {
+    "id": 2,
+    "title": "Tubarão na Praia",
+    "tagline": "O mar não é seguro",
+    "overview": "Um tubarão gigante aterroriza uma pequena cidade costeira durante o verão o xerife local precisa encontrar e capturar a criatura antes que mais pessoas sejam atacadas",
+    "genres": ["Terror", "Aventura"]
+  },
+  {
+    "id": 3,
+    "title": "A Última Viagem",
+    "tagline": "O espaço é o limite",
+    "overview": "Uma astronauta brasileira lidera a primeira missão tripulada a Marte enfrentando desafios técnicos e conflitos pessoais durante a longa viagem pelo espaço",
+    "genres": ["Ficção Científica", "Drama"]
+  },
+  {
+    "id": 4,
+    "title": "Chuva de Verão",
+    "tagline": "Cada gota conta uma história",
+    "overview": "Dois jovens se conhecem durante uma tempestade de verão em uma cidade do interior e descobrem que o amor pode surgir nos momentos mais inesperados",
+    "genres": ["Romance", "Drama"]
+  },
+  {
+    "id": 5,
+    "title": "O Mistério da Ilha",
+    "tagline": "Ninguém sai vivo",
+    "overview": "Um grupo de amigos viaja para uma ilha deserta e descobre que a ilha esconde segredos antigos e perigos mortais que ameaçam a sobrevivência de todos",
+    "genres": ["Terror", "Mistério"]
+  }
+]

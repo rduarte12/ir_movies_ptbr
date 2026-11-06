@@ -1,0 +1,1 @@
+"""Interface Gradio do buscador."""

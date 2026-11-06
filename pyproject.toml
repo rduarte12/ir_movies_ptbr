@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=75.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ir-movies"
+version = "0.1.0"
+description = "Buscador didático de filmes PT-BR — TF-IDF + cosseno"
+requires-python = ">=3.13,<3.14"
+license = "MIT"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 99
+src = ["src", "tests", "notebooks"]
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "W",
+    "I",
+    "UP",
+    "B",
+    "SIM",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["ir_movies"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

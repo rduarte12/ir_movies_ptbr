@@ -1,0 +1,39 @@
+# Configuração do buscador de filmes PT-BR.
+# Fonte de verdade para todos os parâmetros (sem números mágicos no código).
+# Decisões relacionadas: D-003, D-004, D-013, D-014, D-015.
+
+snapshot:
+  target_size: 20000         # D-003: filmes aceitos
+  min_overview_words: 5      # D-004
+  min_vote_count: 2          # D-004
+  exclude_adult: true        # D-004 (adendo, proposta)
+
+tmdb:
+  language: "pt-BR"          # D-002
+  max_concurrency: 4         # proposta; ajustar na Sprint 1 após ler limites da TMDB
+  retry:
+    max_attempts: 3
+    backoff_factor: 1.0
+  poster_size: "w342"        # proposta; verificar tamanhos na doc da TMDB (Sprint 1)
+
+text:
+  stemmer: "snowball_pt"     # D-014; Q-003 resolvida
+  extra_stopwords: []        # Q-004: manter filme/filmes no vocabulário
+  strip_accents: true        # D-014
+
+tfidf:
+  ngram_range: [1, 1]        # D-015
+  norm: "l2"                 # D-015
+  smooth_idf: true           # D-015
+  sublinear_tf: false        # D-015
+  min_df: 1                  # D-015; Q-004 resolvida
+
+search:
+  top_k: 20
+
+logging:
+  dir: "logs"
+  enabled: true
+
+ui:
+  app_name: "Buscador de Filmes"  # placeholder; Q-005 pendente (Sprint 6)
