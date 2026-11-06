@@ -77,15 +77,27 @@ def test_mini_snapshot_answers_example_queries(mini_df):
         assert index.search(query, k=5), f"consulta de exemplo sem resultado: {query!r}"
 
 
-def test_generation_is_deterministic_and_matches_committed(tmp_path):
+def test_generation_is_deterministic(tmp_path):
     script = _load_script()
     first = script.build_mini_snapshot(REAL_DIR, tmp_path / "a")
     second = script.build_mini_snapshot(REAL_DIR, tmp_path / "b")
     for path_a, path_b in zip(first, second, strict=True):
         assert _sha256(path_a) == _sha256(path_b)
-        assert _sha256(path_a) == _sha256(MINI_DIR / path_a.name), (
-            f"{path_a.name} versionado difere do gerado: rode scripts/make_mini_snapshot.py"
-        )
+
+
+def test_committed_fixture_matches_generated(tmp_path):
+    """A fixture versionada é a que o script gera hoje.
+
+    O parquet é comparado byte a byte. O JSON é comparado pelo conteúdo: o
+    controle de versão pode converter fim de linha na cópia de trabalho.
+    """
+    script = _load_script()
+    parquet, meta = script.build_mini_snapshot(REAL_DIR, tmp_path)
+    hint = "rode scripts/make_mini_snapshot.py"
+    assert _sha256(parquet) == _sha256(MINI_DIR / parquet.name), f"parquet desatualizado: {hint}"
+    generated = json.loads(meta.read_text(encoding="utf-8"))
+    committed = json.loads((MINI_DIR / meta.name).read_text(encoding="utf-8"))
+    assert generated == committed, f"snapshot_meta.json desatualizado: {hint}"
 
 
 def test_generation_does_not_touch_real_snapshot(tmp_path):

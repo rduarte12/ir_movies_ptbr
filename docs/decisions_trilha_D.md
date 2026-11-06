@@ -1,4 +1,4 @@
-# Decisões da Sprint 8 (entrega e verificação) — faixa D-070 a D-089
+﻿# Decisões da Sprint 8 (entrega e verificação) — faixa D-070 a D-089
 
 > Todas com status `proposta` até o Rafael confirmar. Quando confirmadas, as entradas devem ser
 > transcritas para `docs/decisions.md`, que é o registro oficial. Formato igual ao de `decisions.md`.
@@ -42,8 +42,7 @@
     `file_size_bytes`; acrescenta o bloco `derived_from` (identifica a origem e o script).
     `created_utc` é herdado da origem: o script não lê o relógio.
   - Determinismo: sem aleatoriedade, sem relógio; JSON com `indent=2`, `ensure_ascii=False`, fim
-    de linha `\n`. Gerar duas vezes produz bytes idênticos (teste), e o arquivo versionado é
-    conferido contra o gerado na hora (teste): se alguém mudar o script ou a origem sem regerar a
+    de linha `\n`. Gerar duas vezes produz bytes idênticos (teste), e a fixture versionada é conferida contra a gerada na hora (teste; o parquet byte a byte, o JSON pelo conteúdo, porque o controle de versão pode converter fim de linha): se alguém mudar o script ou a origem sem regerar a
     fixture, o teste falha.
   - Isolamento: o script só escreve na pasta de destino (padrão `tests/fixtures/mini_snapshot/`,
     ou a dada em `--dest`) e só lê `data/`. Um teste prova que `data/` não muda.
