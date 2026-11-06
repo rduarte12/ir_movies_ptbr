@@ -105,7 +105,7 @@ print(f"Resultados:    {cfg['search']['top_k']} por busca")
 if "service" not in globals():
     from ir_movies.query.service import SearchService
 
-    service = SearchService(cfg)
+    service = SearchService.from_config(project_root / "config.yaml")
 
 print(f"Acervo:  {service.snapshot_id}")
 print(f"Versão:  {service.app_version}")
