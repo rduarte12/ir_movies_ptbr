@@ -66,7 +66,7 @@ R = autor do projeto; C = proposta técnica (sempre `proposta` até confirmaçã
 
 ### D-012 · 2026-11-05 · Idiomas
 - **Decisão:** identificadores e arquivos em inglês; docstrings, comentários, docs e UI em PT-BR.
-- **Decidido por:** C · **Status:** aceito
+- **Decidido por:** C · **Status:** aceita
 
 ### D-013 · 2026-11-05 · Texto indexado
 - **Decisão:** `title + tagline + overview + genres`, concatenados. Sem keywords e sem elenco na v1 (keywords da TMDB estão em inglês; elenco traz nomes próprios). Sem peso por campo na v1.
@@ -81,11 +81,11 @@ R = autor do projeto; C = proposta técnica (sempre `proposta` até confirmaçã
 ### D-015 · 2026-11-05 · Hiperparâmetros iniciais do TF-IDF
 - **Decisão:** `TfidfVectorizer` com `ngram_range=(1,1)`, `norm="l2"`, `smooth_idf=True`, `sublinear_tf=False`, `min_df=1` (ajustar após inspecionar vocabulário). Valores em `config.yaml`.
 - **Nota:** com normalização L2 em consulta e documento, cosseno = produto escalar, e a contribuição por termo é `q_t · d_t`.
-- **Decidido por:** C · **Status:** Aceito
+- **Decidido por:** C · **Status:** aceita
 
 ### D-016 · 2026-11-05 · Snapshot em parquet, versionado
 - **Decisão:** `data/movies_ptbr_YYYYMMDD.parquet` + `data/snapshot_meta.json` no git (sem Git LFS).
-- **Decidido por:** C · **Status:** Aceito
+- **Decidido por:** C · **Status:** aceita
 
 ### D-017 · 2026-11-05 · Segredos
 - **Decisão:** token de leitura da TMDB em `.env` (`TMDB_READ_ACCESS_TOKEN`), enviado em header `Authorization: Bearer`. `.env.example` versionado. As ferramentas de desenvolvimento não leem `.env`
@@ -94,7 +94,7 @@ R = autor do projeto; C = proposta técnica (sempre `proposta` até confirmaçã
 
 ### D-018 · 2026-11-05 · Processo de desenvolvimento por sprints
 - **Decisão:** uma sprint por rodada de trabalho; planejar antes de implementar; branch e PR por sprint; commits pequenos; diário por sprint; tag `sprint-NN`; `git add/commit/push` exigem aprovação.
-- **Decidido por:** C · **Status:** proposta
+- **Decidido por:** C · **Status:** aceita
 
 ### D-019 · 2026-11-05 · Versão do Python: 3.13 (igual ao Colab)
 - **Contexto:** Q-002 pede fixar a mesma versão do Colab. O Colab tem 3.13.18; localmente o winget instalou 3.13.17 (última disponível).
@@ -125,7 +125,7 @@ R = autor do projeto; C = proposta técnica (sempre `proposta` até confirmaçã
   - Disponível a partir de ~8:00 UTC diariamente; retenção de 3 meses.
   - Salvamento local: `data/raw/movie_ids_YYYY-MM-DD.json.gz` (não versionado).
 - **Verificado:** URL funcional (status 200), esquema conferido com 5 linhas reais.
-- **Decidido por:** C · **Status:** proposta
+- **Decidido por:** C · **Status:** aceita
 
 ### D-023 · 2026-11-05 · Política de retry e rate-limit do cliente TMDB
 - **Contexto:** a documentação da TMDB (https://developer.themoviedb.org/docs/rate-limiting) indica limite superior de ~40 req/s e pede respeitar HTTP 429.
@@ -136,7 +136,7 @@ R = autor do projeto; C = proposta técnica (sempre `proposta` até confirmaçã
   - Rate limit: `time.sleep(1/rate_limit_rps)` entre chamadas. Valor padrão: `rate_limit_rps: 20` (conservador, ~metade do limite real).
   - Sem concorrência no Sprint 1 (cliente sequencial). `max_concurrency` será usado pelo pipeline na Sprint 2.
 - **Verificado:** rate limit documentado como ~40 req/s sem limites formais publicados.
-- **Decidido por:** C · **Status:** proposta
+- **Decidido por:** C · **Status:** aceita
 
 ### D-024 · 2026-11-05 · Formato do checkpoint incremental
 - **Contexto:** o pipeline (Sprint 2) precisa retomar a coleta sem re-buscar filmes já processados na API.
@@ -146,7 +146,7 @@ R = autor do projeto; C = proposta técnica (sempre `proposta` até confirmaçã
   - Retomada: carrega os dois arquivos; pula candidatos cujo ID já aparece em `progress.jsonl`.
   - Flush a cada N candidatos processados (`snapshot.checkpoint_interval` em `config.yaml`, padrão 500).
 - **Motivo:** `progress.jsonl` fornece estatísticas de rejeição para `snapshot_meta.json`; `accepted_movies.jsonl` evita re-fetch.
-- **Decidido por:** C · **Status:** proposta
+- **Decidido por:** C · **Status:** aceita
 
 ### D-025 · 2026-11-05 · Validações do snapshot
 - **Decisão:** após escrever o parquet, verificar:
@@ -157,13 +157,13 @@ R = autor do projeto; C = proposta técnica (sempre `proposta` até confirmaçã
   - Colunas obrigatórias nunca nulas: `id`, `title`, `overview`
   - Colunas que admitem nulo: `poster_path`, `tagline`, `runtime`, `director`, `release_date`
 - **Registrar no meta:** contagem por motivo de rejeição, distribuição de tamanho de sinopse (mín/mediana/máx palavras), tamanho do arquivo em disco.
-- **Decidido por:** C · **Status:** proposta
+- **Decidido por:** C · **Status:** aceita
 
 ### D-026 · 2026-11-05 · Pipeline de coleta sequencial
 - **Contexto:** D-023 mencionava `max_concurrency` para Sprint 2, mas a concorrência com threads adiciona complexidade (rate-limiter compartilhado, tratamento de erro em threads) sem ganho significativo para uma coleta que roda uma vez.
 - **Decisão:** pipeline sequencial usando `TmdbClient` diretamente. `max_concurrency` em `config.yaml` fica como placeholder para versão futura.
 - **Motivo:** código mais simples e explicável (teach-back); a taxa de 20 req/s sequencial já é suficiente (~30–60 min para o corpus).
-- **Decidido por:** C · **Status:** proposta
+- **Decidido por:** C · **Status:** aceita
 
 ### D-027 · 2026-11-06 · target_size = candidatos a buscar, não aceitos (Revoga: D-003)
 - **Contexto:** D-003 dizia "até aceitar 20.000 filmes". A intenção original do Rafael sempre foi **buscar os detalhes dos 20.000 candidatos mais populares** e depois filtrar. O parquet terá ≤ 20.000 linhas (quantas passarem nos filtros).
@@ -218,7 +218,7 @@ R = autor do projeto; C = proposta técnica (sempre `proposta` até confirmaçã
   seria montada contra um invariante que não vale.
 - **Alternativa descartada:** manter as sprints em sequência. Mais simples de coordenar, bem mais
   lento, e a interface seria escrita sem nunca ter sido exercitada contra um buscador de verdade.
-- **Origem:** C · **Status:** proposta
+- **Origem:** C · **Status:** aceita
 
 ### D-091 · 2026-11-06 · Correção de forma: neutralidade nos documentos versionados
 - **Contexto:** 12 linhas de arquivos já versionados citavam ferramentas externas de
@@ -239,7 +239,7 @@ R = autor do projeto; C = proposta técnica (sempre `proposta` até confirmaçã
   só o comentário deixaria o caminho da pasta no arquivo, e o objetivo não seria atingido. A
   exclusão já está em `.git/info/exclude` (local), e citar arquivos de processo em arquivo
   versionado é justamente o que a regra de neutralidade proíbe.
-- **Origem:** R (autorização) / C (levantamento e redação) · **Status:** proposta
+- **Origem:** R (autorização) / C (levantamento e redação) · **Status:** aceita
 
 ---
 
@@ -251,4 +251,4 @@ R = autor do projeto; C = proposta técnica (sempre `proposta` até confirmaçã
 | Q-002 | Versão do Python (igual à do Colab) | Sprint 0 | Resolvida: D-019 — Python >=3.13,<3.14
 | Q-003 | RSLP × Snowball | Sprint 3 | Usar Snowball
 | Q-004 | `min_df` e stopwords de consulta ("filme", "filmes"...) | Sprint 4 | min_df=1 e remover stopwords tradicionais (manter filme, filmes, film e etc...)
-| Q-005 | Nome público do app | Sprint 6 | A ser decedido
+| Q-005 | Nome público do app | Sprint 6 | FilmUSP
