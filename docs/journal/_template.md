@@ -1,7 +1,6 @@
 # Sprint NN — <título>
 
 - **Data:** AAAA-MM-DD · **Branch:** `<nome>` · **Tag:** `sprint-NN`
-- **Sessão do Claude Code:** <id ou observação>
 
 ## O que foi feito
 - ...
