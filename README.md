@@ -48,9 +48,9 @@ pôsteres do CDN da TMDB.
    [`docs/architecture.md`](docs/architecture.md) (seção 7), o notebook clona o repositório,
    instala `requirements-app.txt` (veja [Versões](#versões-e-dependências)), carrega o acervo e
    abre a interface.
-3. Meta de tempo, de uma sessão nova do Colab até a tela pronta: até 5 minutos, sem passos
+3. Meta de tempo, de um ambiente novo do Colab até a tela pronta: até 5 minutos, sem passos
    manuais (meta de `docs/project_scope.md`; **ainda não medida**).
-4. O log de consultas fica no disco do Colab, que é apagado quando a sessão termina. Baixe o
+4. O log de consultas fica no disco do Colab, que é apagado quando o ambiente é encerrado. Baixe o
    arquivo de `logs/` antes de encerrar (veja [Privacidade](#privacidade)).
 
 Se o Colab cair durante uma demonstração, use o plano B local e o roteiro de contingência em
@@ -134,8 +134,8 @@ Python: `>=3.13,<3.14`.
 ## Privacidade
 
 **As buscas são registradas de forma anônima.** Cada busca e cada clique em um filme viram uma
-linha em `logs/queries-AAAA-MM-DD.jsonl` com: horário (UTC), um identificador aleatório da sessão
-do navegador (sem relação com a pessoa), o texto da busca, quantidade de resultados, os ids dos
+linha em `logs/queries-AAAA-MM-DD.jsonl` com: horário (UTC), um identificador aleatório por visita
+ao app (sem relação com a pessoa), o texto da busca, quantidade de resultados, os ids dos
 primeiros filmes e o tempo da busca. **Nenhum dado pessoal é guardado**: nem endereço IP, nem
 identificação do navegador, nem nome. A pasta `logs/` não vai para o Git. Os campos completos
 estão em [`docs/architecture.md`](docs/architecture.md) (seção 5).

@@ -12,7 +12,7 @@ Resumo dos critérios de aprovação:
 
 | Critério | Meta |
 |---|---|
-| "Executar tudo" no Colab, sessão nova, sem passos manuais | até 5 min |
+| "Executar tudo" no Colab, ambiente novo, sem passos manuais | até 5 min |
 | Latência de uma busca (campo `latency_ms` do log) | até 200 ms (mediana e p95) |
 | Estabilidade | 2 h contínuas sem queda da interface |
 | Resultado igual no Colab e no local (determinismo) | mesmos ids no topo para a mesma frase |
@@ -42,7 +42,7 @@ sem queda. Duração mínima: 2 h 00 min sem interrupção do ensaio.
 
 ### B1. Partida a frio
 
-- [ ] Abrir o Colab em uma aba nova, **sessão nova** (Ambiente de execução > Desconectar e excluir
+- [ ] Abrir o Colab em uma aba nova, **ambiente novo** (Ambiente de execução > Desconectar e excluir
       ambiente de execução, e abrir o notebook de novo).
 - [ ] Disparar um cronômetro e clicar em **Executar tudo**. Parar o cronômetro quando a interface
       aparecer pronta para uma busca.
@@ -99,7 +99,7 @@ computador (outras abas, videochamada).
 
 ### B4. Baixar o log e medir a latência
 
-O log fica no disco do Colab e some quando a sessão termina (Q-001). Ao fim do ensaio, **antes**
+O log fica no disco do Colab e some quando o ambiente é encerrado (Q-001). Ao fim do ensaio, **antes**
 de fechar a aba:
 
 - [ ] Painel de arquivos do Colab (ícone de pasta, à esquerda) > pasta `logs/` > o arquivo
