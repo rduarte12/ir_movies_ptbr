@@ -2,6 +2,10 @@
 
 Formato: `D-NNN · data · título`. Status: `aceita` | `proposta` (aguarda confirmação do Rafael) | `revogada` (por D-NNN).
 Regra: decisão `aceita` não se edita; para mudar, nova entrada com `Revoga: D-NNN`.
+Faixas de IDs das Sprints 5 a 8 (D-090): 030–049 serviço e log, 050–069 interface e
+explicabilidade, 070–089 entrega e verificação, 090 em diante contrato e integração.
+Lacunas na numeração são esperadas: cada faixa foi reservada antes de se saber quantas
+decisões cada frente exigiria.
 "Decidido por": Rafael (R) ou Claude (C, sempre `proposta` até confirmação).
 
 ---
@@ -175,6 +179,45 @@ Regra: decisão `aceita` não se edita; para mudar, nova entrada com `Revoga: D-
 - **Decisão:** Snowball PT. Diferenças em 10/35 palavras. Snowball produz radicais mais legíveis (aparecem na UI, nível 3): "amor" fica "amor" (RSLP: "am"), "astronauta" fica "astronaut" (RSLP: "astron"), "amar" fica "amar" (RSLP: "am").
 - **Tradeoff:** RSLP agrupa mais agressivamente (pode casar mais sinônimos), mas perde legibilidade. Para um demo didático, legibilidade é prioritária.
 - **Decidido por:** R · **Status:** aceita
+
+### D-090 · 2026-11-06 · Contrato do serviço de busca, para trabalho em paralelo
+- **Contexto:** as Sprints 5 (serviço e log), 6–7 (interface e explicabilidade) e 8 (entrega)
+  seriam feitas em sequência. Em sequência, a interface só começa depois de o serviço terminar.
+- **Decisão:** fixar antes de tudo um contrato em `src/ir_movies/query/types.py` e trabalhar as
+  três frentes em paralelo, cada uma na sua branch:
+  - `Movie`, `MovieHit`, `SearchResult` (dados), `Rewriter`, `QueryLoggerProtocol` e
+    `SearchServiceProtocol` (protocolos), `MODEL_NAME`, `MAX_QUERY_CHARS`.
+  - A interface depende **somente** de `SearchServiceProtocol` e recebe o serviço por injeção:
+    não conhece o índice TF-IDF nem o log. O clique é registrado por `service.log_click`.
+  - A interface não lê `config.yaml` para saber `top_k` nem `snapshot_id`: pede ao serviço
+    (`k=None` usa `search.top_k`). Continua lendo os parâmetros de apresentação (`ui.*`,
+    `tmdb.poster_size`).
+  - `SearchResult` carrega identificadores e números; os dados de exibição vêm de
+    `get_movie(movie_id)`, como `architecture.md` secao 3 já previa.
+  - Cinco regras obrigatórias, documentadas no protocolo e testadas em `tests/test_contract.py`:
+    (1) consulta vazia, só com palavras comuns ou sem palavra no acervo devolve lista vazia sem
+    levantar exceção, com o rastreio preenchido; (2) a consulta é truncada em 300 caracteres pelo
+    próprio serviço; (3) a soma das contribuições por termo é igual à pontuação (tolerância 1e-9);
+    (4) a busca só registra no log quando recebe `session_id`; (5) determinismo do ranking.
+  - Normalizações do carregador, para a interface ter uma regra só: `runtime` e `poster_path`
+    viram `None` quando ausentes (o snapshot usa `0` e vazio); `tagline`, `director` e
+    `release_date` ficam como string vazia.
+  - O carregador resolve o parquet pelo `snapshot_id` de `data/snapshot_meta.json`, em vez de ter
+    o nome do arquivo embutido no código: uma recoleta futura não quebra código nem teste.
+  - `app_version` vem de `ir_movies.__version__` (não de `importlib.metadata`: no Colab o pacote
+    é clonado, não instalado).
+- **Convenção `IR_MOVIES_NO_LAUNCH`:** `build_app` monta e devolve o objeto Gradio e **nunca**
+  chama `.launch()`. Só o notebook 02 lança, e só quando a variável de ambiente não vale
+  exatamente `"1"`. É o que permite testar o notebook sem abrir servidor.
+- **`tests/fakes.py`:** implementação de referência do contrato sobre o corpus de brinquedo,
+  usando o índice e o pré-processamento **reais**, com log em memória. A interface é construída e
+  testada contra ela antes de o serviço real existir. Pontuações inventadas não serviriam: a
+  explicabilidade é construída sobre o invariante "soma das contribuições = cosseno", e a tela
+  seria montada contra um invariante que não vale.
+- **Alternativa descartada:** manter as sprints em sequência. Mais simples de coordenar, bem mais
+  lento, e a interface seria escrita sem nunca ter sido exercitada contra um buscador de verdade.
+- **Origem:** C · **Status:** proposta
+
 
 ---
 
