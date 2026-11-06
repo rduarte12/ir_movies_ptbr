@@ -75,10 +75,10 @@
 
 **Depende de:** 4. **Decisões:** persistência do log no Colab (Q-001).
 
-- [ ] `Rewriter` (protocolo) + `IdentityRewriter`
-- [ ] `SearchService.search` (reescrita → índice → resultado com trace e termos fora do vocabulário)
-- [ ] `QueryLogger` com esquema de `architecture.md`; testes (inclui: nada de IP, uma linha por evento)
-- [ ] Decidir e registrar como o log sai do Colab
+- [x] `Rewriter` (protocolo) + `IdentityRewriter`
+- [x] `SearchService.search` (reescrita → índice → resultado com trace e termos fora do vocabulário)
+- [x] `QueryLogger` com esquema de `architecture.md`; testes (inclui: nada de IP, uma linha por evento)
+- [x] Decidir e registrar como o log sai do Colab
 
 **Critério de conclusão:** teste de ponta a ponta (consulta → resultado → linha de log) passa.
 **Teach-back:** onde um LLM entraria e o que mudaria (determinismo).
