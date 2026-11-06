@@ -63,10 +63,10 @@
 
 **Depende de:** 2 e 3. **Decisões:** `min_df`, stopwords de consulta (Q-004).
 
-- [ ] `TfidfIndex.build` / `.search` conforme D-015
-- [ ] `TfidfIndex.contributions` e testes dos **invariantes 1–5** de `architecture.md`
-- [ ] Teste em corpus de brinquedo com valores calculados à mão
-- [ ] Medir latência e tamanho em memória com os 20 mil filmes; olhar manualmente 10 consultas e anotar observações no diário
+- [x] `TfidfIndex.build` / `.search` conforme D-015
+- [x] `TfidfIndex.contributions` e testes dos **invariantes 1–5** de `architecture.md`
+- [x] Teste em corpus de brinquedo com valores calculados à mão
+- [x] Medir latência e tamanho em memória com os 20 mil filmes; olhar manualmente 10 consultas e anotar observações no diário
 
 **Critério de conclusão:** invariantes passam; latência ≤ meta do escopo; 10 consultas inspecionadas e anotadas.
 **Teach-back:** como o score de cosseno é calculado e por que a soma das contribuições o reproduz.
