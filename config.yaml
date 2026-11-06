@@ -6,7 +6,8 @@ snapshot:
   target_size: 20000         # D-003: filmes aceitos
   min_overview_words: 5      # D-004
   min_vote_count: 2          # D-004
-  exclude_adult: true        # D-004 (adendo, proposta)
+  exclude_adult: true        # D-004 (adendo, aceita)
+  checkpoint_interval: 500   # D-024: flush a cada N candidatos processados
 
 tmdb:
   language: "pt-BR"          # D-002
@@ -14,7 +15,7 @@ tmdb:
   retry:
     max_attempts: 3
     backoff_factor: 1.0
-  rate_limit_rps: 20          # D-023: conservador (~metade do limite real de ~40 req/s)
+  rate_limit_rps: 30          # D-023: conservador (~metade do limite real de ~40 req/s)
   poster_size: "w342"        # proposta; verificar tamanhos na doc da TMDB (Sprint 1)
 
 text:
