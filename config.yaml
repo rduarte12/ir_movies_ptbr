@@ -38,4 +38,14 @@ logging:
   enabled: true
 
 ui:
-  app_name: "Buscador de Filmes"  # placeholder; Q-005 pendente (Sprint 6)
+  app_name: "FilmUSP"        # D-050: Q-005 resolvida
+  grid_columns: 5            # ui_spec.md secao 1.3: grade de pôsteres
+  score_decimals: 3          # ui_spec.md secao 3: mesma convenção nos 3 níveis
+  highlight_levels: 4        # D-051: faixas de cor do destaque na sinopse
+  rare_idf_threshold: 3.3    # D-053: idf >= limiar -> selo "palavra rara"
+  max_examples: 6            # D-060: quantos exemplos clicáveis a tela mostra
+  examples:                  # D-060; os dois primeiros vêm de ui_spec.md secao 1.2
+    - "um tubarão assustador na praia"
+    - "robô que se apaixona"
+    - "viagem ao espaço com astronauta brasileira"
+    - "amigos presos numa ilha deserta"
