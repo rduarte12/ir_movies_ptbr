@@ -164,6 +164,18 @@ Regra: decisão `aceita` não se edita; para mudar, nova entrada com `Revoga: D-
 - **Decisão:** `target_size` define quantos candidatos consultar na API (os top N por popularidade). Os filtros (D-004) rodam sobre esses N. O corpus final tem tantas linhas quantas passarem.
 - **Decidido por:** R · **Status:** aceita
 
+### D-028 · 2026-11-06 · Tokenização: hífens separam, números mantidos
+- **Contexto:** D-014 diz "tokenização por regex de palavras" sem detalhar hífens e números.
+- **Decisão:** regex `[a-z0-9]+` após normalização (minúsculas + unidecode). Hífens separam tokens ("bem-estar" → ["bem", "estar"]). Números são mantidos ("2001" vira token).
+- **Motivo:** simplifica a regex, compatível com unigrama; números podem ser relevantes em títulos de filmes.
+- **Decidido por:** R · **Status:** aceita
+
+### D-029 · 2026-11-06 · Comparação RSLP × Snowball: Snowball confirmado (Q-003)
+- **Contexto:** Q-003 pedia comparar os stemmers. Comparação feita em 35 palavras reais do corpus e consultas típicas.
+- **Decisão:** Snowball PT. Diferenças em 10/35 palavras. Snowball produz radicais mais legíveis (aparecem na UI, nível 3): "amor" fica "amor" (RSLP: "am"), "astronauta" fica "astronaut" (RSLP: "astron"), "amar" fica "amar" (RSLP: "am").
+- **Tradeoff:** RSLP agrupa mais agressivamente (pode casar mais sinônimos), mas perde legibilidade. Para um demo didático, legibilidade é prioritária.
+- **Decidido por:** R · **Status:** aceita
+
 ---
 
 ## Questões abertas
