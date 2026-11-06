@@ -37,6 +37,11 @@ Este arquivo é incorporado a `docs/decisions.md` na integração das Sprints 5 
   decrescente (a ordem que `TfidfIndex.contributions` já devolve). A largura é
   `contribuição / maior contribuição`, em porcentagem; ao lado da barra, sempre, o valor numérico
   da contribuição com a mesma formatação da pontuação (D-054).
+- **Piso de largura de 2%:** uma contribuição muito pequena renderizaria uma barra de largura
+  quase zero, indistinguível de barra nenhuma — e "não tem barra" se lê como "esta palavra não
+  contou", o que seria falso. Então a largura tem piso de 2% (`ui.format.MIN_BAR_WIDTH_PERCENT`).
+  O piso não engana: o número ao lado da barra é o valor real, e é ele que manda (ver o rótulo
+  obrigatório acima). Acima do piso, a largura é exatamente a razão com a maior contribuição.
 - **Motivo do rótulo:** `ui_spec.md` secao 3 exige que nada dependa só de cor. O rótulo também
   serve a quem olha de longe e não distingue comprimentos parecidos.
 - **Rótulo da palavra:** a primeira forma de superfície (`TermContribution.surface_forms`), isto é
@@ -119,6 +124,18 @@ Este arquivo é incorporado a `docs/decisions.md` na integração das Sprints 5 
   verificável abrindo o navegador, e a Explicabilidade é justamente a parte que não pode ser
   aceita "de olho".
 - **`build_app` nunca chama `.launch()`** (convenção `IR_MOVIES_NO_LAUNCH` de D-090).
+- **Assinatura:** `build_app(service, cfg)`. `architecture.md` secao 3 previa
+  `build_app(service, snapshot)`, de quando a interface receberia os dados do filme direto. D-090
+  mudou isso: os dados vêm de `service.get_movie`, e o segundo argumento passou a ser a
+  configuração, de onde saem os parâmetros de apresentação. A tabela do `architecture.md` ficou
+  para trás; o arquivo não pertence a esta frente, então o acerto vai como pedido de mudança.
+- **Identificadores do DOM:** cada componente que recebe conteúdo tem `elem_id` próprio
+  (`fu-message`, `fu-results`, `fu-details-panel`, `fu-level-1`, `fu-level-2`, `fu-level-3`), e o
+  `Blocks` tem `ir-movies-app` — neutro, porque o nome público do app vive no `config.yaml` e não
+  se repete no código (D-050). Além de servirem ao CSS, são o que permite um teste afirmar que
+  **cada valor devolvido pelo manipulador chega ao componente certo**, e não só que a quantidade
+  de valores confere. Cada bloco de conteúdo carrega também uma classe que só ele tem
+  (`fu-details-block`, `fu-block-level1` a `fu-block-level3`), presente em todos os estados.
 - **Origem:** C · **Status:** proposta
 
 ### D-058 · 2026-11-06 · `session_id` por carregamento de página; só o clique explícito é registrado
@@ -165,4 +182,20 @@ Este arquivo é incorporado a `docs/decisions.md` na integração das Sprints 5 
   cheia é melhor que a moldura dentro do notebook.
 - **Célula final (Q-001):** quando `google.colab` existe, compacta `logs/` e oferece o download;
   fora do Colab, apenas informa onde os arquivos estão. Nada quebra em nenhum dos dois casos.
+- **Origem:** C · **Status:** proposta
+
+### D-062 · 2026-11-06 · A nota da TMDB é a única exceção à convenção de 3 casas
+- **Contexto:** `ui_spec.md` secao 3 manda mostrar "sempre a pontuação com 3 casas decimais e a
+  mesma convenção em todos os níveis". O painel de detalhes mostra também a **nota da TMDB**, que
+  não é pontuação de busca: é a média de avaliação do filme, numa escala de 0 a 10.
+- **Decisão:** a convenção de 3 casas (D-054) vale para **pontuação e contribuição** — os números
+  que a Explicabilidade explica. A nota da TMDB aparece com **1 casa decimal** e vírgula
+  (`6,1`), seguida do número de votos, que é o que a torna interpretável. `6,100` não é como
+  ninguém escreve nota de filme, e a precisão extra seria falsa: a própria TMDB publica uma casa.
+- **Por que não há confusão:** os dois números nunca aparecem no mesmo bloco. O painel de
+  detalhes não mostra pontuação nenhuma; a pontuação vive na legenda da grade e nos três níveis.
+- **Rastreabilidade:** a exceção está fixada em teste
+  (`test_the_tmdb_rating_is_the_only_exception_in_the_details_panel`), que exige que **todo**
+  número decimal do painel de detalhes tenha exatamente uma casa. Se um dia a pontuação entrar
+  no painel, o teste cai e a decisão volta à mesa.
 - **Origem:** C · **Status:** proposta

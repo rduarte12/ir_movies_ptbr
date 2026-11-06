@@ -28,10 +28,12 @@
   contribuição, **sempre** com o valor numérico ao lado, e o selo "palavra rara"/"palavra comum"
   conforme o limiar de `ui.rare_idf_threshold` (D-053). A tela nunca escreve "IDF": o selo é
   explicado como "raridade da palavra no acervo".
-- **Nível 3** (`view.level3_html`): o passo a passo — sua pergunta; palavras ignoradas por serem
-  comuns; palavras reduzidas ao radical (com a seta `palavra → radical`); palavras que não
-  existem no acervo; a tabela `radical · peso na pergunta · peso no filme · produto`; e a soma
-  dos produtos, que é a pontuação.
+- **Nível 3** (`view.level3_html`): os seis passos de `ui_spec.md` secao 1.5 — (a) sua pergunta;
+  (b) palavras ignoradas por serem comuns; (c) palavras reduzidas ao radical (com a seta
+  `palavra → radical`); (d) palavras que não existem no acervo; (e) a tabela
+  `radical · peso na pergunta · peso no filme · produto`, com a soma no rodapé; e (f) a frase que
+  fecha a explicação, "Pontuação deste filme = 0,387", em destaque. O passo (f) é um passo
+  próprio porque é o ponto de chegada de tudo: a soma dos produtos **é** a pontuação.
 - Os três níveis ficam visíveis ao mesmo tempo, antes e depois da busca (D-010).
 - `tests/test_explain.py`: 29 testes. As verificações dos níveis na tela estão em
   `tests/test_ui.py`, junto com o resto da interface.
@@ -44,6 +46,7 @@ Registradas em `docs/decisions_trilha_C.md`.
 - D-052 — Nível 2: barras horizontais com rótulo numérico obrigatório (`proposta`)
 - D-053 — Limiar "palavra rara" × "palavra comum" em termos de IDF (`proposta`)
 - D-054 — Pontuação com 3 casas decimais e vírgula; a soma exibida é a exata (`proposta`)
+- D-062 — A nota da TMDB é a única exceção à convenção de 3 casas (`proposta`)
 
 ## Premissas assumidas
 
@@ -80,14 +83,26 @@ Para a identidade entre os níveis, `TestLevelThreeNumbers` extrai o número da 
 o número da soma do nível 3 do HTML gerado e compara os dois, e também compara os dois com a soma
 das contribuições calculada pelo índice.
 
+`TestHighlightLevels` fixa a tradução de intensidade em faixa de cor, com os valores de fronteira
+das quatro faixas: sem ele, "sempre a faixa mais forte" e "sempre a mais fraca" passariam verdes,
+e a sinopse inteira sairia de uma cor só — exatamente o defeito que só os olhos pegariam.
+
 ## Resultado das verificações
 
-- `python -m pytest tests/test_explain.py tests/test_ui.py -q`: 102 testes, 0 falhas.
-- `python -m pytest -q` (tudo): 223 testes, 0 falhas.
+- `python -m pytest tests/test_explain.py tests/test_ui.py -q`: 133 testes, 0 falhas.
+- `python -m pytest -q` (tudo): 254 testes, 0 falhas.
 - Soma do nível 3 igual à pontuação da legenda, com 3 casas, para todos os resultados de uma
-  consulta do acervo de brinquedo.
+  consulta do acervo de brinquedo. O passo (f) e o rodapé da tabela mostram o mesmo número.
 - Produto de cada linha da tabela igual a `peso na pergunta × peso no filme`, com tolerância
   de 1e-12.
+- A política de arredondamento de D-054 está fixada por um caso construído à mão (três
+  contribuições de 0,1234: soma exata 0,370, soma dos arredondados 0,369; a tela mostra 0,370).
+  O acervo de brinquedo não produz essa diferença, então sem o caso sintético a política poderia
+  ser revertida em silêncio.
+- A largura de cada barra do nível 2 é comparada com a razão esperada, e não só com a ordem:
+  barras todas em 100% satisfariam "a maior é 100" e "estão em ordem decrescente".
+- As quatro faixas de cor do destaque são todas alcançáveis, nunca decrescem com a intensidade, e
+  cada uma tem classe correspondente no CSS.
 
 ## Pendências e riscos
 

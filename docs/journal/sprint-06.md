@@ -20,9 +20,12 @@
 - `notebooks/02_search_app.py` (par jupytext): setup para Colab e local, serviço por injeção num
   ponto marcado, `build_app`, lançamento condicional por `IR_MOVIES_NO_LAUNCH` e a célula final
   opcional que compacta `logs/` para download no Colab.
-- `tests/test_ui.py`: 73 testes, incluindo os que chamam os manipuladores de evento que
-  `build_app` registrou no Gradio — é o que prova que a ligação dos eventos existe e que o
-  clique num pôster chega ao `log_click` com o `rank` certo.
+- `tests/test_ui.py`: 104 testes, incluindo os que chamam os manipuladores de evento que
+  `build_app` registrou no Gradio. Eles conferem que o clique num pôster chega ao `log_click` com
+  o `rank` certo e que **cada valor devolvido pelo manipulador chega ao componente certo** — não
+  só que a quantidade de valores confere. Cada bloco de conteúdo carrega uma classe que só ele
+  tem, e a conferência exige que nenhum bloco contenha a marca de outro; um teste aplica trocas
+  de ordem de propósito e exige que a conferência falhe.
 
 A tela fala somente com `SearchServiceProtocol` e com a configuração (D-090): não conhece o
 índice TF-IDF nem o arquivo de log. O clique é registrado por `service.log_click`, com `rank`
@@ -48,7 +51,10 @@ Registradas em `docs/decisions_trilha_C.md`, para incorporação na faixa D-050 
   notebook, numa linha marcada.
 - `launch(share=True, inline=False)`: `share` é o que dá um endereço acessível no Colab e
   `inline=False` abre a tela em aba própria, melhor para projetar. Não foi exercitado no Colab.
-- O nome `FilmUSP` vai no `config.yaml` e em nenhum outro lugar do código.
+- O nome `FilmUSP` vai no `config.yaml` e em nenhum outro lugar do código. **Correção:** na
+  primeira versão o `elem_id` do `Blocks` e duas regras do CSS traziam `filmusp-app`, o que
+  contrariava D-050. Trocados por `ir-movies-app`, que é identificador técnico e não nome
+  público.
 - `tmdb.poster_size` segue `w342`, intocado: a seção não pertence a esta frente.
 
 ## Desvios do plano
@@ -58,6 +64,10 @@ Registradas em `docs/decisions_trilha_C.md`, para incorporação na faixa D-050 
 - O CSS entra como um bloco de estilo na própria página, e não pelo parâmetro `css` do
   `gr.Blocks`: no Gradio 6 esse parâmetro só é lido dentro de `launch()`, que `build_app` nunca
   chama (D-055).
+- **Assinatura de `build_app`:** `architecture.md` secao 3 prevê `build_app(service, snapshot)`;
+  o entregue é `build_app(service, cfg)`, que é o que D-090 determina — os dados do filme vêm de
+  `service.get_movie`, e o segundo argumento traz os parâmetros de apresentação. Registrado em
+  D-057 e aberto como pedido de mudança no `architecture.md`, que não pertence a esta frente.
 
 ## Como verificar
 
@@ -79,8 +89,8 @@ IR_MOVIES_NO_LAUNCH=1 python -c "import sys; sys.path.insert(0,'tests'); \
 
 ## Resultado das verificações
 
-- `python -m pytest -q`: 223 testes, 0 falhas (121 herdados + 29 de `test_explain.py` +
-  73 de `test_ui.py`).
+- `python -m pytest -q`: 254 testes, 0 falhas (121 herdados + 29 de `test_explain.py` +
+  104 de `test_ui.py`).
 - `python -m ruff check .`: All checks passed.
 - `ruff format --check` nos arquivos desta frente: sem diferenças.
 - `build_app` devolve `gradio.Blocks` com `is_running = False` e `local_url = None`; um teste
