@@ -16,8 +16,8 @@ nova aqui; acima do que existe, a última faixa é reaproveitada.
 """
 
 CSS = """
-#filmusp-app, #filmusp-app * { font-size: 18px; }
-#filmusp-app { max-width: 1400px; margin: 0 auto; }
+#ir-movies-app, #ir-movies-app * { font-size: 18px; }
+#ir-movies-app { max-width: 1400px; margin: 0 auto; }
 
 .fu-header { padding: 0.6rem 0 0.2rem 0; border-bottom: 4px solid #1a1a1a; }
 .fu-header h1 { font-size: 44px; font-weight: 800; margin: 0; color: #111111; }
@@ -80,6 +80,10 @@ CSS = """
 .fu-table th { background: #eef1f6; font-weight: 700; text-align: center; }
 .fu-table td:first-child, .fu-table th:first-child { text-align: left; }
 .fu-table tr.fu-total td { font-weight: 800; background: #ffeec2; border-top: 3px solid #333333; }
+
+.fu-sum { font-size: 22px; font-weight: 700; color: #111111; margin: 0.3rem 0; }
+.fu-score-value { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums;
+  background: #ffeec2; padding: 0.05rem 0.4rem; border-radius: 6px; }
 
 .fu-note { font-size: 15px; color: #444444; margin-top: 0.3rem; }
 

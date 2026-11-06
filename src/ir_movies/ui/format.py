@@ -72,6 +72,24 @@ def rating_label(vote_average: float, vote_count: int) -> str:
     return f"{vote_average:.1f}".replace(".", ",") + f" ({vote_count} {texts.RATING_VOTES})"
 
 
+MIN_BAR_WIDTH_PERCENT = 2.0
+"""Piso da largura da barra do nível 2, em porcentagem (D-052)."""
+
+
+def bar_width(contribution: float, largest: float) -> float:
+    """Largura da barra do nível 2, em porcentagem da maior contribuição (D-052).
+
+    O piso de ``MIN_BAR_WIDTH_PERCENT`` existe para que uma contribuição muito
+    pequena ainda apareça como barra, em vez de desaparecer e dar a impressão
+    de que a palavra não contou. O número ao lado da barra é que diz quanto foi
+    de verdade, então o piso não engana ninguém.
+    """
+    if largest <= 0:
+        return MIN_BAR_WIDTH_PERCENT
+    share = contribution / largest * 100
+    return max(MIN_BAR_WIDTH_PERCENT, min(100.0, share))
+
+
 def highlight_level(intensity: float, levels: int) -> int:
     """Faixa de cor de um destaque, de 1 (mais fraca) a *levels* (D-051).
 
