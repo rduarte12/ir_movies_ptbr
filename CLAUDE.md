@@ -20,7 +20,8 @@ Contratos entre módulos: `docs/architecture.md`. Interface: `docs/ui_spec.md`.
 
 - Uma sprint por sessão. Comece em **modo de planejamento**: proponha arquivos, premissas, decisões novas e como verificar; espere aprovação.
 - Passos pequenos, rodando os testes a cada passo. O critério de conclusão da sprint deve ser verificável por comando.
-- Commits pequenos, mensagem `sprint-NN: resumo (D-NNN)`. `git add/commit/push` exigem aprovação do Rafael.
+- **Nunca faça commits diretamente.** Ao final da sprint, gere um arquivo `rascunho_commits.txt` (já no `.gitignore`) com os comandos `git add` e `git commit` organizados, mensagens sugeridas e instruções de branch/push. O Rafael revisa, edita as mensagens e executa manualmente.
+- Mensagem sugerida: `sprint-NN: resumo (D-NNN)`.
 - Ao final, explique em linguagem simples o que foi feito: o Rafael precisa entender e defender o código.
 
 ## Convenções
