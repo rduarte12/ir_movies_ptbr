@@ -165,6 +165,67 @@ class TestBuildApp:
         assert len(first) == 32 and first.isalnum()
 
 
+# --- Eventos ligados de verdade no Gradio ---
+
+
+def wired_fn(demo: gr.Blocks, name: str):
+    """O manipulador que ``build_app`` registrou no Gradio, pelo nome.
+
+    Chamar a função registrada — e não a de ``view`` — é o que prova que a
+    ligação dos eventos existe e que o número de saídas casa com o número de
+    componentes de saída. Uma troca de ordem nos ``outputs`` passaria batida
+    por qualquer teste que só chamasse ``view``.
+    """
+    found = [fn for fn in demo.fns.values() if getattr(fn.fn, "__name__", "") == name]
+    assert found, f"nenhum evento registrado com o manipulador {name}"
+    return found[0]
+
+
+class TestWiredEvents:
+    def test_search_event_is_wired_to_every_output(self, service, cfg):
+        demo = build_app(service, cfg)
+        event = wired_fn(demo, "on_search")
+        returned = event.fn(QUERY_WITH_HITS, "sessao-1")
+        assert len(returned) == len(event.outputs) == 7
+        assert isinstance(returned[-1], SearchResult)
+
+    def test_select_event_is_wired_to_the_four_panels(self, service, cfg):
+        demo = build_app(service, cfg)
+        assert wired_fn(demo, "on_select").outputs, "o clique precisa de saídas"
+        assert len(wired_fn(demo, "on_select").outputs) == 4
+
+    def test_select_event_is_registered_on_the_gallery(self, service, cfg):
+        demo = build_app(service, cfg)
+        gallery = next(b for b in demo.blocks.values() if isinstance(b, gr.Gallery))
+        targets = wired_fn(demo, "on_select").targets
+        assert (gallery._id, "select") in targets
+
+    def test_clicking_the_second_poster_logs_rank_two(self, service, cfg):
+        """C9 pelo caminho real: evento do Gradio, não a função de ``view``."""
+        demo = build_app(service, cfg)
+        gallery = next(b for b in demo.blocks.values() if isinstance(b, gr.Gallery))
+        result = wired_fn(demo, "on_search").fn("robô tubarão espaço chuva ilha", "sessao-1")[-1]
+        assert len(result.hits) >= 2
+        service.logger.events.clear()
+
+        event_data = gr.SelectData(
+            target=gallery, data={"index": 1, "value": None, "selected": True}
+        )
+        panels = wired_fn(demo, "on_select").fn("sessao-1", result, event_data)
+
+        assert len(panels) == 4
+        assert service.logger.events[0].fields == {
+            "movie_id": result.hits[1].movie_id,
+            "rank": 2,
+        }
+
+    def test_page_load_event_creates_the_session_id(self, service, cfg):
+        demo = build_app(service, cfg)
+        event = wired_fn(demo, "new_session_id")
+        assert [target[1] for target in event.targets] == ["load"]
+        assert event.fn() != event.fn()
+
+
 # --- C6: os seis estados de ui_spec.md secao 2 ---
 
 

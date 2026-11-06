@@ -82,8 +82,8 @@ das contribuições calculada pelo índice.
 
 ## Resultado das verificações
 
-- `python -m pytest tests/test_explain.py tests/test_ui.py -q`: 97 testes, 0 falhas.
-- `python -m pytest -q` (tudo): 218 testes, 0 falhas.
+- `python -m pytest tests/test_explain.py tests/test_ui.py -q`: 102 testes, 0 falhas.
+- `python -m pytest -q` (tudo): 223 testes, 0 falhas.
 - Soma do nível 3 igual à pontuação da legenda, com 3 casas, para todos os resultados de uma
   consulta do acervo de brinquedo.
 - Produto de cada linha da tabela igual a `peso na pergunta × peso no filme`, com tolerância

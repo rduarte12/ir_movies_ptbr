@@ -20,7 +20,9 @@
 - `notebooks/02_search_app.py` (par jupytext): setup para Colab e local, serviço por injeção num
   ponto marcado, `build_app`, lançamento condicional por `IR_MOVIES_NO_LAUNCH` e a célula final
   opcional que compacta `logs/` para download no Colab.
-- `tests/test_ui.py`: 68 testes.
+- `tests/test_ui.py`: 73 testes, incluindo os que chamam os manipuladores de evento que
+  `build_app` registrou no Gradio — é o que prova que a ligação dos eventos existe e que o
+  clique num pôster chega ao `log_click` com o `rank` certo.
 
 A tela fala somente com `SearchServiceProtocol` e com a configuração (D-090): não conhece o
 índice TF-IDF nem o arquivo de log. O clique é registrado por `service.log_click`, com `rank`
@@ -77,8 +79,8 @@ IR_MOVIES_NO_LAUNCH=1 python -c "import sys; sys.path.insert(0,'tests'); \
 
 ## Resultado das verificações
 
-- `python -m pytest -q`: 218 testes, 0 falhas (121 herdados + 29 de `test_explain.py` +
-  68 de `test_ui.py`).
+- `python -m pytest -q`: 223 testes, 0 falhas (121 herdados + 29 de `test_explain.py` +
+  73 de `test_ui.py`).
 - `python -m ruff check .`: All checks passed.
 - `ruff format --check` nos arquivos desta frente: sem diferenças.
 - `build_app` devolve `gradio.Blocks` com `is_running = False` e `local_url = None`; um teste
