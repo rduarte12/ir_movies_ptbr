@@ -113,7 +113,7 @@
 
 - [ ] Ensaio de 2h contínuas no Colab (anotar desconexões e lentidão)
 - [ ] Testar o plano B local (Jupyter)
-- [ ] `README.md`: o que é, como rodar (local e Colab), versões, origem dos dados, **atribuição TMDB**, aviso de log anônimo
+- [x] `README.md`: o que é, como rodar (local e Colab), versões, origem dos dados, **atribuição TMDB**, aviso de log anônimo
 - [ ] Revisar `.gitignore`, segredos e `docs/`
 - [ ] Tag `v1.0`
 

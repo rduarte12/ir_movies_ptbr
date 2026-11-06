@@ -98,6 +98,10 @@
   7. testes e estrutura do repositório;
   8. licença;
   9. atribuição TMDB (frase exata, ao final e também referenciada na seção de dados).
+  Pontos de atenção, escritos no README de forma explícita: o Jupyter não está fixado em nenhum
+  dos três arquivos de requirements (o README manda instalá-lo à parte, sem versão fixada); a
+  primeira execução do pré-processamento baixa as *stopwords* do NLTK (exige internet uma vez); o
+  endereço do repositório nos comandos é uma premissa não verificada.
   O README descreve o comportamento **documentado** (`ui_spec.md`, `architecture.md`); onde algo
   ainda não foi verificado de ponta a ponta (execução no Colab, interface), diz isso em um
   bloco "Estado de verificação", que deve ser reduzido pelo autor após o ensaio.
