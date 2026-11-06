@@ -81,8 +81,6 @@ def test_accented_stopword(prep):
 def test_filme_not_stopword(prep):
     """'filme' não é stopword (Q-004: extra_stopwords vazio)."""
     tokens = prep.tokens("filme brasileiro")
-    stems = {t for t in tokens}
-    # "filme" deve gerar algum radical presente
     assert len(tokens) == 2
 
 
