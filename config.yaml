@@ -14,6 +14,7 @@ tmdb:
   retry:
     max_attempts: 3
     backoff_factor: 1.0
+  rate_limit_rps: 20          # D-023: conservador (~metade do limite real de ~40 req/s)
   poster_size: "w342"        # proposta; verificar tamanhos na doc da TMDB (Sprint 1)
 
 text:
