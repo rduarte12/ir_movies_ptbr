@@ -228,3 +228,6 @@ data/raw/
 data/checkpoints/
 # Configuracao local do Claude Code
 .claude/settings.local.json
+
+# arquivos especificos
+rascunho_commits.txt
