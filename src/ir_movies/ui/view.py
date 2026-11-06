@@ -190,6 +190,8 @@ def details_html(movie: Movie, cfg: dict) -> str:
             _definition(texts.LABEL_RATING, rating_label(movie.vote_average, movie.vote_count)),
             _definition(texts.LABEL_DIRECTOR, movie.director),
             _definition(texts.LABEL_CAST, ", ".join(movie.cast_top5)),
+            f"<dt>{html.escape(texts.LABEL_OVERVIEW)}</dt>"
+            f'<dd class="fu-overview">{html.escape(movie.overview)}</dd>',
         ]
     )
     year = f" ({html.escape(movie.year)})" if movie.year else ""
@@ -203,8 +205,6 @@ def details_html(movie: Movie, cfg: dict) -> str:
         f"<h2>{html.escape(movie.title)}{year}</h2>"
         f"{tagline}"
         f"<dl>{rows}</dl>"
-        f"<dt>{html.escape(texts.LABEL_OVERVIEW)}</dt>"
-        f'<dd class="fu-overview">{html.escape(movie.overview)}</dd>'
         "</div></div>"
     )
 
