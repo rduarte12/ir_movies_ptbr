@@ -87,10 +87,10 @@
 
 **Depende de:** 5. **Decisões:** nome do app (Q-005), tamanho do pôster, versão do Gradio.
 
-- [ ] Célula de setup para Colab e local (clone, instalação, carga do snapshot)
-- [ ] Busca + exemplos clicáveis + grade de resultados + painel de detalhes (conforme `ui_spec.md`)
-- [ ] Estados: consulta vazia, sem resultados, sem pôster
-- [ ] Rodar no Colab com a versão fixada do Gradio
+- [x] Célula de setup para Colab e local (clone, instalação, carga do snapshot)
+- [x] Busca + exemplos clicáveis + grade de resultados + painel de detalhes (conforme `ui_spec.md`)
+- [x] Estados: consulta vazia, sem resultados, sem pôster
+- [ ] Rodar no Colab com a versão fixada do Gradio — **pendência manual** (ver `docs/journal/sprint-06.md`)
 
 **Critério de conclusão:** "Run all" numa sessão nova do Colab abre a interface e permite buscar e clicar.
 **Teach-back:** o caminho de uma consulta, da caixa de texto ao pôster na tela.
@@ -99,10 +99,10 @@
 
 **Depende de:** 6 e 4. **Decisões:** visual das barras, escala de intensidade do destaque.
 
-- [ ] Nível 1: sinopse com destaque proporcional à contribuição (`explain.highlight`)
-- [ ] Nível 2: barras de contribuição por palavra
-- [ ] Nível 3: passo a passo (tokens → ignoradas → radicais → pesos → soma = score)
-- [ ] Textos em linguagem simples conforme `ui_spec.md`; revisar com 2–3 pessoas leigas
+- [x] Nível 1: sinopse com destaque proporcional à contribuição (`explain.highlight`)
+- [x] Nível 2: barras de contribuição por palavra
+- [x] Nível 3: passo a passo (tokens → ignoradas → radicais → pesos → soma = score)
+- [ ] Textos em linguagem simples conforme `ui_spec.md`; revisar com 2–3 pessoas leigas — textos escritos; a revisão com pessoas é **pendência manual** (ver `docs/journal/sprint-07.md`)
 
 **Critério de conclusão:** para qualquer filme clicado, os 3 níveis aparecem e os números do nível 3 batem com o score exibido.
 **Teach-back:** por que "palavra rara pesa mais" (IDF) aparece na tela.
