@@ -59,9 +59,9 @@ ir_movies_ptbr/
 | `index.tfidf` | `TfidfIndex.contributions(query, doc_id)` | consulta, documento | `list[TermContribution(stem, surface_forms, idf, q_weight, d_weight, contribution)]` |
 | `query.rewriter` | `Rewriter.rewrite(raw)` (protocolo) | consulta bruta | consulta efetiva. `IdentityRewriter` na v1 |
 | `query.service` | `SearchService.search(raw, k, session_id)` | consulta bruta | `SearchResult`: raw, effective, trace, hits, termos fora do acervo, latência |
-| `explain` | `highlight(text, matched_stems, weights)` | sinopse + termos | segmentos `(texto, intensidade \| None)` |
+| `explain` | `highlight(text, contributions, text_cfg=None)` | sinopse + lista de `TermContribution` (a que o serviço já devolve) | segmentos `(texto, intensidade \| None)` |
 | `logging_jsonl` | `QueryLogger.log_search(...)`, `.log_click(...)` | resultado / clique | linha JSONL (append) |
-| `ui.app` | `build_app(service, snapshot)` | serviço + dados | objeto Gradio |
+| `ui.app` | `build_app(service, cfg)` | serviço + configuração (D-090) | objeto Gradio |
 
 ### Invariantes (devem ter teste)
 
@@ -122,7 +122,7 @@ Nunca registrar IP, user-agent ou qualquer dado pessoal. Aviso discreto na UI.
 snapshot:   {target_size: 20000, min_overview_words: 5, min_vote_count: 2, exclude_adult: true}
 tmdb:       {language: pt-BR, max_concurrency: <int>, retry: {...}, poster_size: <str>}
 text:       {stemmer: snowball_pt, extra_stopwords: [...], strip_accents: true}
-tfidf:      {ngram_range: [1,1], norm: l2, smooth_idf: true, sublinear_tf: false, min_df: 2}
+tfidf:      {ngram_range: [1,1], norm: l2, smooth_idf: true, sublinear_tf: false, min_df: 1}
 search:     {top_k: 20}
 logging:    {dir: logs, enabled: true}
 ui:         {app_name: <str>}
@@ -135,3 +135,5 @@ Valores marcados como proposta em `decisions.md` (D-014, D-015) podem mudar; a f
 - **Local (notebook 01 e desenvolvimento):** `.env` com `TMDB_READ_ACCESS_TOKEN`.
 - **Colab (notebook 02):** clona o repositório, instala `requirements-app.txt`, lê o snapshot. Não usa a API da TMDB (só o CDN de pôsteres).
 - Python igual nos dois (Q-002).
+- **Primeira execução num ambiente novo precisa de rede:** o `Preprocessor` baixa as stopwords do NLTK na primeira construção. Depois disso, funciona offline.
+- **Endereço que o Colab clona:** `https://github.com/rduarte12/ir_movies_ptbr.git`.
