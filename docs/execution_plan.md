@@ -10,14 +10,14 @@
 
 **Depende de:** nada. **Decisões a registrar:** versão do Python (Q-002), gerenciador de ambiente, versões fixadas.
 
-- [ ] Descobrir a versão do Python do Colab e fixar a mesma localmente
-- [ ] Criar ambiente virtual; criar `requirements-app.txt`, `requirements-collect.txt`, `requirements-dev.txt` com versões fixadas
-- [ ] `pyproject.toml` mínimo (config de ruff, pytest, pacote `src/ir_movies` instalável em modo editável)
-- [ ] Criar estrutura de pastas de `architecture.md` (módulos vazios com docstring)
-- [ ] `config.yaml` inicial; `.env.example`; `.gitattributes` (`* text=auto`, evita ruído de CRLF no Windows)
-- [ ] Salvar 1 resposta real de `/movie/{id}` em `tests/fixtures/` (sem token) e um corpus de brinquedo para TF-IDF
-- [ ] Configurar jupytext e nbstripout; confirmar comandos do `CLAUDE.md`
-- [ ] Teste "fumaça" (`pytest` passa com 1 teste trivial)
+- [x] Descobrir a versão do Python do Colab e fixar a mesma localmente
+- [x] Criar ambiente virtual; criar `requirements-app.txt`, `requirements-collect.txt`, `requirements-dev.txt` com versões fixadas
+- [x] `pyproject.toml` mínimo (config de ruff, pytest, pacote `src/ir_movies` instalável em modo editável)
+- [x] Criar estrutura de pastas de `architecture.md` (módulos vazios com docstring)
+- [x] `config.yaml` inicial; `.env.example`; `.gitattributes` (`* text=auto`, evita ruído de CRLF no Windows)
+- [x] Salvar 1 resposta real de `/movie/{id}` em `tests/fixtures/` (sem token) e um corpus de brinquedo para TF-IDF
+- [x] Configurar jupytext e nbstripout; confirmar comandos do `CLAUDE.md`
+- [x] Teste "fumaça" (`pytest` passa com 1 teste trivial)
 
 **Critério de conclusão:** `python -m pytest`, `ruff check` e `jupytext --sync` rodam sem erro numa sessão limpa.
 **Teach-back:** por que há 3 arquivos de requirements; o que o jupytext faz.

@@ -90,6 +90,26 @@ Regra: decisão `aceita` não se edita; para mudar, nova entrada com `Revoga: D-
 - **Decisão:** uma sprint por sessão; planejar antes de implementar; branch e PR por sprint; commits pequenos; diário por sprint; tag `sprint-NN`; `git add/commit/push` exigem aprovação.
 - **Decidido por:** C · **Status:** proposta
 
+### D-019 · 2026-11-05 · Versão do Python: 3.13 (igual ao Colab)
+- **Contexto:** Q-002 pede fixar a mesma versão do Colab. O Colab tem 3.13.18; localmente o winget instalou 3.13.17 (última disponível).
+- **Decisão:** `requires-python = ">=3.13,<3.14"` no `pyproject.toml`. Aceita qualquer 3.13.x — diferenças de patch não afetam compatibilidade de bibliotecas.
+- **Alternativa descartada:** fixar o micro exato (3.13.18) — impraticável, pois o winget não tem essa versão ainda.
+- **Decidido por:** R (Colab como referência) / C (faixa `>=3.13,<3.14`) · **Status:** aceita
+
+### D-020 · 2026-11-05 · Gerenciador de ambiente: venv (stdlib)
+- **Decisão:** usar `py -3.13 -m venv .venv`. Sem ferramentas externas (conda, uv, virtualenv).
+- **Motivo:** já vem com o Python, funciona igual no Windows e Linux, zero dependências extras. No Colab não é necessário (ambiente já isolado).
+- **Decidido por:** C · **Status:** aceita
+
+### D-021 · 2026-11-05 · Dependências com versão fixada e separação em 3 arquivos
+- **Decisão:** todas as dependências com `==` (versão exata). Três arquivos:
+  - `requirements-app.txt` — o que o Colab instala para o notebook 02 (busca + UI): scikit-learn, numpy, nltk, Unidecode, pandas, pyarrow, PyYAML, python-dotenv, gradio.
+  - `requirements-collect.txt` — o que a máquina local instala para o notebook 01 (coleta): requests, tenacity, pandas, pyarrow, PyYAML, python-dotenv.
+  - `requirements-dev.txt` — inclui os dois acima (`-r`) + pytest, ruff, jupytext, nbstripout.
+- **Cliente HTTP:** `requests` (escolha do Rafael) + `tenacity` para retry com backoff.
+- **Procedimento de pinagem:** instalar sem versão fixa, anotar as versões via `pip freeze`, escrever nos arquivos.
+- **Decidido por:** R (requests, 3 arquivos) / C (separação e procedimento) · **Status:** aceita
+
 ---
 
 ## Questões abertas
@@ -97,7 +117,7 @@ Regra: decisão `aceita` não se edita; para mudar, nova entrada com `Revoga: D-
 | ID | Questão | Quando resolver |
 |---|---|---|
 | Q-001 | Como persistir o log quando rodar no Colab (baixar ao final? espelhar no Drive?) | Sprint 5 | Salvar no colab. EU baixo o arquivo depois manualmente
-| Q-002 | Versão do Python (igual à do Colab) | Sprint 0 | Sim
+| Q-002 | Versão do Python (igual à do Colab) | Sprint 0 | Resolvida: D-019 — Python >=3.13,<3.14
 | Q-003 | RSLP × Snowball | Sprint 3 | Usar Snowball
 | Q-004 | `min_df` e stopwords de consulta ("filme", "filmes"...) | Sprint 4 | min_df=1 e remover stopwords tradicionais (manter filme, filmes, film e etc...)
 | Q-005 | Nome público do app | Sprint 6 | A ser decedido

@@ -1,0 +1,12 @@
+# Dependências do notebook 02 (busca + UI) — Colab instala este arquivo.
+# Decisão: D-021. Versões fixadas com Python 3.13.
+
+scikit-learn==1.9.1
+numpy==2.5.4
+nltk==3.10.4
+Unidecode==1.4.0
+pandas==3.1.1
+pyarrow==26.0.1
+PyYAML==6.0.3
+python-dotenv==1.2.4
+gradio==6.31.0

@@ -221,7 +221,8 @@ __marimo__/
 
 # --- ir_movies_ptbr ---
 # Logs de consultas (privacidade): nunca versionar
-logs/
+logs/*
+!logs/.gitkeep
 # Coleta TMDB: dados brutos e checkpoints (o snapshot final em data/ e versionado)
 data/raw/
 data/checkpoints/

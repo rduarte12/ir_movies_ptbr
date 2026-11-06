@@ -1,0 +1,10 @@
+# Dependências de desenvolvimento — inclui app + coleta + ferramentas.
+# Decisão: D-021. Versões fixadas com Python 3.13.
+
+-r requirements-app.txt
+-r requirements-collect.txt
+
+pytest==9.2.0
+ruff==0.17.4
+jupytext==1.19.6
+nbstripout==0.9.1
