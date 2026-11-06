@@ -52,9 +52,9 @@
 
 **Depende de:** 0 (pode usar a fixture). **Decisões:** RSLP × Snowball (Q-003), stopwords de consulta.
 
-- [ ] `Preprocessor.tokens` e `.trace` conforme D-014 (stopwords normalizadas sem acento)
-- [ ] Testes: acentos, hífen, números, caixa, stopwords, perguntas completas
-- [ ] Comparar RSLP × Snowball em ~30 palavras/frases reais; registrar a escolha
+- [x] `Preprocessor.tokens` e `.trace` conforme D-014 (stopwords normalizadas sem acento)
+- [x] Testes: acentos, hífen, números, caixa, stopwords, perguntas completas
+- [x] Comparar RSLP × Snowball em ~30 palavras/frases reais; registrar a escolha
 
 **Critério de conclusão:** testes passam; a decisão sobre o stemmer está registrada com exemplos.
 **Teach-back:** o que é stemming e o que ele erra em português.
