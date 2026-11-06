@@ -226,8 +226,5 @@ logs/*
 # Coleta TMDB: dados brutos e checkpoints (o snapshot final em data/ e versionado)
 data/raw/
 data/checkpoints/
-# Configuracao local do Claude Code
-.claude/settings.local.json
-
 # arquivos especificos
 rascunho_commits.txt

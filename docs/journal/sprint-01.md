@@ -1,7 +1,6 @@
 # Sprint 01 — Coleta: IDs e cliente TMDB
 
 - **Data:** 2026-11-05 · **Branch:** `sprint01/tmdb-client` · **Tag:** `sprint-01`
-- **Sessão do Claude Code:** background job, Opus 4.6
 
 ## O que foi feito
 - Verificação da documentação oficial da TMDB: URL do export diário, campos do JSONL, ausência de autenticação, rate limits (~40 req/s)

@@ -1,0 +1,28 @@
+{
+  "snapshot_id": "20261106",
+  "created_utc": "2026-11-06T03:29:36.616533+00:00",
+  "endpoints": [
+    "GET /movie/{id}?language=pt-BR&append_to_response=credits,keywords"
+  ],
+  "filters": {
+    "min_overview_words": 5,
+    "min_vote_count": 2,
+    "exclude_adult": true
+  },
+  "candidates_tested": 30,
+  "accepted": 30,
+  "rejections_by_reason": {},
+  "overview_word_count": {
+    "min": 18,
+    "median": 49,
+    "max": 86
+  },
+  "git_hash": "332017c",
+  "code_version": "sprint-02",
+  "file_size_bytes": 28973,
+  "derived_from": {
+    "snapshot_id": "20261106",
+    "accepted": 8002,
+    "script": "scripts/make_mini_snapshot.py"
+  }
+}

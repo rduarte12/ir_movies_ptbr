@@ -1,6 +1,6 @@
 # Plano de execução — Sprints
 
-> Uma sprint por sessão do Claude Code. Cada sprint: planejar → aprovar → implementar → verificar → registrar.
+> Uma sprint por rodada de trabalho. Cada sprint: planejar → aprovar → implementar → verificar → registrar.
 > Ao concluir: marcar o checklist, preencher `docs/journal/sprint-NN.md`, registrar decisões novas, commit/PR, tag `sprint-NN`.
 > "Teach-back" = o que o Rafael deve conseguir explicar com as próprias palavras antes de fechar a sprint.
 
@@ -16,10 +16,10 @@
 - [x] Criar estrutura de pastas de `architecture.md` (módulos vazios com docstring)
 - [x] `config.yaml` inicial; `.env.example`; `.gitattributes` (`* text=auto`, evita ruído de CRLF no Windows)
 - [x] Salvar 1 resposta real de `/movie/{id}` em `tests/fixtures/` (sem token) e um corpus de brinquedo para TF-IDF
-- [x] Configurar jupytext e nbstripout; confirmar comandos do `CLAUDE.md`
+- [x] Configurar jupytext e nbstripout; confirmar os comandos do projeto
 - [x] Teste "fumaça" (`pytest` passa com 1 teste trivial)
 
-**Critério de conclusão:** `python -m pytest`, `ruff check` e `jupytext --sync` rodam sem erro numa sessão limpa.
+**Critério de conclusão:** `python -m pytest`, `ruff check` e `jupytext --sync` rodam sem erro num ambiente limpo.
 **Teach-back:** por que há 3 arquivos de requirements; o que o jupytext faz.
 
 ## Sprint 1 — Coleta: IDs e cliente TMDB
@@ -75,10 +75,10 @@
 
 **Depende de:** 4. **Decisões:** persistência do log no Colab (Q-001).
 
-- [ ] `Rewriter` (protocolo) + `IdentityRewriter`
-- [ ] `SearchService.search` (reescrita → índice → resultado com trace e termos fora do vocabulário)
-- [ ] `QueryLogger` com esquema de `architecture.md`; testes (inclui: nada de IP, uma linha por evento)
-- [ ] Decidir e registrar como o log sai do Colab
+- [x] `Rewriter` (protocolo) + `IdentityRewriter`
+- [x] `SearchService.search` (reescrita → índice → resultado com trace e termos fora do vocabulário)
+- [x] `QueryLogger` com esquema de `architecture.md`; testes (inclui: nada de IP, uma linha por evento)
+- [x] Decidir e registrar como o log sai do Colab
 
 **Critério de conclusão:** teste de ponta a ponta (consulta → resultado → linha de log) passa.
 **Teach-back:** onde um LLM entraria e o que mudaria (determinismo).
@@ -87,10 +87,10 @@
 
 **Depende de:** 5. **Decisões:** nome do app (Q-005), tamanho do pôster, versão do Gradio.
 
-- [ ] Célula de setup para Colab e local (clone, instalação, carga do snapshot)
-- [ ] Busca + exemplos clicáveis + grade de resultados + painel de detalhes (conforme `ui_spec.md`)
-- [ ] Estados: consulta vazia, sem resultados, sem pôster
-- [ ] Rodar no Colab com a versão fixada do Gradio
+- [x] Célula de setup para Colab e local (clone, instalação, carga do snapshot)
+- [x] Busca + exemplos clicáveis + grade de resultados + painel de detalhes (conforme `ui_spec.md`)
+- [x] Estados: consulta vazia, sem resultados, sem pôster
+- [ ] Rodar no Colab com a versão fixada do Gradio — **pendência manual** (ver `docs/journal/sprint-06.md`)
 
 **Critério de conclusão:** "Run all" numa sessão nova do Colab abre a interface e permite buscar e clicar.
 **Teach-back:** o caminho de uma consulta, da caixa de texto ao pôster na tela.
@@ -99,10 +99,10 @@
 
 **Depende de:** 6 e 4. **Decisões:** visual das barras, escala de intensidade do destaque.
 
-- [ ] Nível 1: sinopse com destaque proporcional à contribuição (`explain.highlight`)
-- [ ] Nível 2: barras de contribuição por palavra
-- [ ] Nível 3: passo a passo (tokens → ignoradas → radicais → pesos → soma = score)
-- [ ] Textos em linguagem simples conforme `ui_spec.md`; revisar com 2–3 pessoas leigas
+- [x] Nível 1: sinopse com destaque proporcional à contribuição (`explain.highlight`)
+- [x] Nível 2: barras de contribuição por palavra
+- [x] Nível 3: passo a passo (tokens → ignoradas → radicais → pesos → soma = score)
+- [ ] Textos em linguagem simples conforme `ui_spec.md`; revisar com 2–3 pessoas leigas — textos escritos; a revisão com pessoas é **pendência manual** (ver `docs/journal/sprint-07.md`)
 
 **Critério de conclusão:** para qualquer filme clicado, os 3 níveis aparecem e os números do nível 3 batem com o score exibido.
 **Teach-back:** por que "palavra rara pesa mais" (IDF) aparece na tela.
@@ -113,7 +113,7 @@
 
 - [ ] Ensaio de 2h contínuas no Colab (anotar desconexões e lentidão)
 - [ ] Testar o plano B local (Jupyter)
-- [ ] `README.md`: o que é, como rodar (local e Colab), versões, origem dos dados, **atribuição TMDB**, aviso de log anônimo
+- [x] `README.md`: o que é, como rodar (local e Colab), versões, origem dos dados, **atribuição TMDB**, aviso de log anônimo
 - [ ] Revisar `.gitignore`, segredos e `docs/`
 - [ ] Tag `v1.0`
 

@@ -1,7 +1,6 @@
 # Sprint 00 — Ambiente e esqueleto
 
 - **Data:** 2026-11-05 · **Branch:** `sprint0/setup` · **Tag:** `sprint-00`
-- **Sessão do Claude Code:** primeira sessão
 
 ## O que foi feito
 - Instalado Python 3.13.17 via winget (compatível com 3.13.18 do Colab)
