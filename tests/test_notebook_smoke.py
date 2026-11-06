@@ -24,8 +24,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
-
 ROOT = Path(__file__).resolve().parent.parent
 NOTEBOOK = ROOT / "notebooks" / "02_search_app.py"
 MINI_SNAPSHOT_DIR = ROOT / "tests" / "fixtures" / "mini_snapshot"
