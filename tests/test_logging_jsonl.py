@@ -195,11 +195,23 @@ class TestFileLayout:
         assert raw.endswith(b"\n")
         assert raw.count(b"\n") == 2
 
-    def test_default_clock_writes_a_file_dated_today_utc(self, tmp_path):
+    def test_default_clock_is_utc_in_ts_and_file_name(self, tmp_path):
         logger = QueryLogger(tmp_path / "logs", app_version="1", snapshot_id="x")
+        before = datetime.now(UTC)
         logger.log_click("s1", 1, 1)
-        today = datetime.now(UTC).strftime("%Y-%m-%d")
-        assert (tmp_path / "logs" / f"queries-{today}.jsonl").exists()
+        after = datetime.now(UTC)
+
+        (log_file,) = (tmp_path / "logs").glob("queries-*.jsonl")
+        (line,) = read_lines(log_file)
+        ts = datetime.fromisoformat(line["ts"])
+
+        # O relógio padrão tem de ser UTC: um `ts` em hora local ficaria sem fuso
+        # (naive) ou com deslocamento diferente de zero, e o nome do arquivo sozinho
+        # coincide com a data UTC na maior parte do dia em qualquer fuso próximo.
+        assert line["ts"].endswith("+00:00")
+        assert ts.utcoffset() == timedelta(0)
+        assert before - timedelta(milliseconds=1) <= ts <= after
+        assert log_file.name == f"queries-{ts.strftime('%Y-%m-%d')}.jsonl"
 
     def test_concurrent_writes_stay_one_json_per_line(self, tmp_path, log_file):
         logger = make_logger(tmp_path)
