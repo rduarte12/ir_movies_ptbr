@@ -110,6 +110,28 @@ Regra: decisão `aceita` não se edita; para mudar, nova entrada com `Revoga: D-
 - **Procedimento de pinagem:** instalar sem versão fixa, anotar as versões via `pip freeze`, escrever nos arquivos.
 - **Decidido por:** R (requests, 3 arquivos) / C (separação e procedimento) · **Status:** aceita
 
+### D-022 · 2026-11-05 · Formato e download do export diário de IDs da TMDB
+- **Contexto:** D-003 pede obter IDs pelo export diário. Verificado na documentação oficial (https://developer.themoviedb.org/docs/daily-id-exports) e confirmado com download real em 2026-11-05.
+- **Decisão:**
+  - URL: `http://files.tmdb.org/p/exports/movie_ids_MM_DD_YYYY.json.gz`
+  - Formato: gzipped JSONL. Campos por linha: `{"adult":bool, "id":int, "original_title":str, "popularity":float, "video":bool}`
+  - Sem autenticação (a documentação avisa que pode mudar no futuro).
+  - Disponível a partir de ~8:00 UTC diariamente; retenção de 3 meses.
+  - Salvamento local: `data/raw/movie_ids_YYYY-MM-DD.json.gz` (não versionado).
+- **Verificado:** URL funcional (status 200), esquema conferido com 5 linhas reais.
+- **Decidido por:** C · **Status:** proposta
+
+### D-023 · 2026-11-05 · Política de retry e rate-limit do cliente TMDB
+- **Contexto:** a documentação da TMDB (https://developer.themoviedb.org/docs/rate-limiting) indica limite superior de ~40 req/s e pede respeitar HTTP 429.
+- **Decisão:**
+  - Retry via `tenacity`: backoff exponencial, `max_attempts` e `backoff_factor` em `config.yaml`.
+  - Retry em: HTTP 429 (Too Many Requests), 5xx (erro de servidor), erros de conexão (`ConnectionError`, `Timeout`).
+  - Não fazer retry em 404 (filme não existe) — propagar a exceção.
+  - Rate limit: `time.sleep(1/rate_limit_rps)` entre chamadas. Valor padrão: `rate_limit_rps: 20` (conservador, ~metade do limite real).
+  - Sem concorrência no Sprint 1 (cliente sequencial). `max_concurrency` será usado pelo pipeline na Sprint 2.
+- **Verificado:** rate limit documentado como ~40 req/s sem limites formais publicados.
+- **Decidido por:** C · **Status:** proposta
+
 ---
 
 ## Questões abertas
