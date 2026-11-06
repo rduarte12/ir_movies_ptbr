@@ -6,7 +6,8 @@ Faixas de IDs das Sprints 5 a 8 (D-090): 030–049 serviço e log, 050–069 int
 explicabilidade, 070–089 entrega e verificação, 090 em diante contrato e integração.
 Lacunas na numeração são esperadas: cada faixa foi reservada antes de se saber quantas
 decisões cada frente exigiria.
-"Decidido por": Rafael (R) ou Claude (C, sempre `proposta` até confirmação).
+Campo de origem: `**Decidido por:**` nas entradas antigas, `**Origem:**` nas novas.
+R = autor do projeto; C = proposta técnica (sempre `proposta` até confirmação do autor).
 
 ---
 
@@ -37,7 +38,7 @@ decisões cada frente exigiria.
 
 ### D-006 · 2026-11-05 · Estrutura: dois notebooks finos + pacote `src/`
 - **Decisão:** `01_collect_tmdb` (local) e `02_search_app` (Colab). Lógica em `src/ir_movies/`. Notebooks em par jupytext (`.py` percent ↔ `.ipynb`); `.ipynb` commitado (Colab abre pelo GitHub), com saídas removidas (nbstripout).
-- **Motivo:** a IA edita `.py` com segurança e os diffs ficam legíveis.
+- **Motivo:** editar o `.py` é mais seguro que editar o `.ipynb`, e os diffs ficam legíveis.
 - **Decidido por:** R (dois notebooks) / C (jupytext, nbstripout) · **Status:** aceita (dois notebooks) · **proposta** (jupytext/nbstripout)
 
 ### D-007 · 2026-11-05 · Colab + Gradio, plano B local
@@ -87,11 +88,12 @@ decisões cada frente exigiria.
 - **Decidido por:** C · **Status:** Aceito
 
 ### D-017 · 2026-11-05 · Segredos
-- **Decisão:** token de leitura da TMDB em `.env` (`TMDB_READ_ACCESS_TOKEN`), enviado em header `Authorization: Bearer`. `.env.example` versionado. O Claude Code não lê `.env` (regra de permissão).
+- **Decisão:** token de leitura da TMDB em `.env` (`TMDB_READ_ACCESS_TOKEN`), enviado em header `Authorization: Bearer`. `.env.example` versionado. As ferramentas de desenvolvimento não leem `.env`
+  (regra de permissão local).
 - **Decidido por:** C · **Status:** aceita
 
-### D-018 · 2026-11-05 · Processo de desenvolvimento com IA
-- **Decisão:** uma sprint por sessão; planejar antes de implementar; branch e PR por sprint; commits pequenos; diário por sprint; tag `sprint-NN`; `git add/commit/push` exigem aprovação.
+### D-018 · 2026-11-05 · Processo de desenvolvimento por sprints
+- **Decisão:** uma sprint por rodada de trabalho; planejar antes de implementar; branch e PR por sprint; commits pequenos; diário por sprint; tag `sprint-NN`; `git add/commit/push` exigem aprovação.
 - **Decidido por:** C · **Status:** proposta
 
 ### D-019 · 2026-11-05 · Versão do Python: 3.13 (igual ao Colab)
@@ -218,6 +220,26 @@ decisões cada frente exigiria.
   lento, e a interface seria escrita sem nunca ter sido exercitada contra um buscador de verdade.
 - **Origem:** C · **Status:** proposta
 
+### D-091 · 2026-11-06 · Correção de forma: neutralidade nos documentos versionados
+- **Contexto:** 12 linhas de arquivos já versionados citavam ferramentas externas de
+  desenvolvimento, em violação à regra de neutralidade do projeto. Entraram antes de os hooks
+  locais existirem, e os hooks só inspecionam linhas **adicionadas** — nenhum commit futuro as
+  pegaria.
+- **Decisão:** reescrever essas linhas trocando apenas a formulação, em
+  `.gitignore`, `docs/architecture.md`, `docs/decisions.md`, `docs/execution_plan.md` e os cinco
+  diários de `sprint-00` a `sprint-04`.
+- **Alcance:** é correção de **forma**. O conteúdo das decisões afetadas (D-006, D-017, D-018)
+  permanece inalterado; nenhum status muda. Por isso não se aplica a regra de não editar decisão
+  `aceita`, e não há revogação.
+- **Critério aplicado à palavra "sessão":** removida quando se referia à rodada de trabalho com
+  ferramenta externa; mantida quando nomeia um conceito real do domínio (sessão do navegador em
+  `architecture.md`, sessão do Colab em `project_scope.md` e `execution_plan.md`).
+- **Mudança que não é só de forma, registrada à parte:** as duas linhas do `.gitignore` que
+  ignoravam a pasta de configuração local de ferramenta foram removidas, não reescritas. Reescrever
+  só o comentário deixaria o caminho da pasta no arquivo, e o objetivo não seria atingido. A
+  exclusão já está em `.git/info/exclude` (local), e citar arquivos de processo em arquivo
+  versionado é justamente o que a regra de neutralidade proíbe.
+- **Origem:** R (autorização) / C (levantamento e redação) · **Status:** proposta
 
 ---
 

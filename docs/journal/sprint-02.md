@@ -1,7 +1,6 @@
 # Sprint 02 — Coleta: filtros, checkpoint e snapshot
 
 - **Data:** 2026-11-05 · **Branch:** `sprint02/collect-pipeline` · **Tag:** `sprint-02`
-- **Sessão do Claude Code:** background job, Opus 4.6
 
 ## O que foi feito
 - `collect/filters.py`: `evaluate(raw, cfg)` aplica filtros de qualidade (adult, sinopse ≥ 5 palavras, vote_count ≥ 2); retorna `(aceito, motivo_rejeição)`

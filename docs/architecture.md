@@ -18,7 +18,6 @@ consulta bruta -> Rewriter -> pré-processar -> TfidfIndex.search -> hits -> Exp
 
 ```
 ir_movies_ptbr/
-├── CLAUDE.md
 ├── README.md                  # Sprint 8
 ├── config.yaml
 ├── .env.example

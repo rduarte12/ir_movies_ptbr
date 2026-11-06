@@ -1,7 +1,6 @@
 # Sprint 04 — Índice TF-IDF, busca e contribuições
 
 - **Data:** 2026-11-06 · **Branch:** `sprint03/preprocessamento`
-- **Sessão do Claude Code:** background job (mesma sessão da Sprint 3)
 
 ## O que foi feito
 - Implementado `TfidfIndex` com `build()`, `search()`, `contributions()`, `oov_terms()` em `src/ir_movies/index/tfidf.py`

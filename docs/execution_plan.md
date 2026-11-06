@@ -1,6 +1,6 @@
 # Plano de execução — Sprints
 
-> Uma sprint por sessão do Claude Code. Cada sprint: planejar → aprovar → implementar → verificar → registrar.
+> Uma sprint por rodada de trabalho. Cada sprint: planejar → aprovar → implementar → verificar → registrar.
 > Ao concluir: marcar o checklist, preencher `docs/journal/sprint-NN.md`, registrar decisões novas, commit/PR, tag `sprint-NN`.
 > "Teach-back" = o que o Rafael deve conseguir explicar com as próprias palavras antes de fechar a sprint.
 
@@ -16,10 +16,10 @@
 - [x] Criar estrutura de pastas de `architecture.md` (módulos vazios com docstring)
 - [x] `config.yaml` inicial; `.env.example`; `.gitattributes` (`* text=auto`, evita ruído de CRLF no Windows)
 - [x] Salvar 1 resposta real de `/movie/{id}` em `tests/fixtures/` (sem token) e um corpus de brinquedo para TF-IDF
-- [x] Configurar jupytext e nbstripout; confirmar comandos do `CLAUDE.md`
+- [x] Configurar jupytext e nbstripout; confirmar os comandos do projeto
 - [x] Teste "fumaça" (`pytest` passa com 1 teste trivial)
 
-**Critério de conclusão:** `python -m pytest`, `ruff check` e `jupytext --sync` rodam sem erro numa sessão limpa.
+**Critério de conclusão:** `python -m pytest`, `ruff check` e `jupytext --sync` rodam sem erro num ambiente limpo.
 **Teach-back:** por que há 3 arquivos de requirements; o que o jupytext faz.
 
 ## Sprint 1 — Coleta: IDs e cliente TMDB

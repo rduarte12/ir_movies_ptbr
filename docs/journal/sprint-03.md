@@ -1,7 +1,6 @@
 # Sprint 03 — Pré-processamento PT-BR
 
 - **Data:** 2026-11-06 · **Branch:** `sprint03/preprocessamento`
-- **Sessão do Claude Code:** background job
 
 ## O que foi feito
 - Implementado `Preprocessor` com `tokens(text)` e `trace(text)` em `src/ir_movies/text/preprocess.py`
