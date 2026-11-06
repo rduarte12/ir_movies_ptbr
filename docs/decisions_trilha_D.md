@@ -1,4 +1,4 @@
-﻿# Decisões da Sprint 8 (entrega e verificação) — faixa D-070 a D-089
+# Decisões da Sprint 8 (entrega e verificação) — faixa D-070 a D-089
 
 > Todas com status `proposta` até o Rafael confirmar. Quando confirmadas, as entradas devem ser
 > transcritas para `docs/decisions.md`, que é o registro oficial. Formato igual ao de `decisions.md`.
