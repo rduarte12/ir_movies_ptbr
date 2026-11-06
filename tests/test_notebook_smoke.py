@@ -116,13 +116,6 @@ def parse_counter(stdout: str, name: str) -> int:
     raise AssertionError(f"{name} ausente na saída do notebook:\n{stdout}")
 
 
-# Para ativar na integração, apague a linha `@pytest.mark.skip(...)` abaixo.
-@pytest.mark.skip(
-    reason=(
-        "Depende da entrega da interface (src/ir_movies/ui/app.py) e do notebook "
-        "02_search_app, escritos em outra frente; o coordenador remove este skip na integração."
-    )
-)
 def test_notebook_02_run_all_without_launching_server(tmp_path):
     notebook = build_mini_project(tmp_path)
 
