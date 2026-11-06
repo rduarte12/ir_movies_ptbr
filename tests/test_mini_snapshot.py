@@ -112,3 +112,21 @@ def test_generation_does_not_touch_real_snapshot(tmp_path):
         "snapshot_meta.json",
         f"movies_ptbr_{real_id}.parquet",
     }
+
+
+def test_canonical_order_breaks_popularity_ties_by_id():
+    """Com popularity empatada, a ordem canônica é por id crescente, qualquer que seja a entrada.
+
+    Os dados sintéticos têm 200 linhas (acima do limite em que a ordenação rápida
+    deixa de se comportar como estável) e entram com os ids em ordem decrescente,
+    de modo que uma ordenação sem desempate por id não produz o resultado esperado.
+    """
+    script = _load_script()
+    ids = list(range(200, 0, -1))
+    popularity = {movie_id: float(movie_id % 5) for movie_id in ids}
+    df = pd.DataFrame({"id": ids, "popularity": [popularity[i] for i in ids]})
+
+    ordered = script.canonical_order(df)
+
+    expected = sorted(ids, key=lambda movie_id: (-popularity[movie_id], movie_id))
+    assert ordered["id"].tolist() == expected

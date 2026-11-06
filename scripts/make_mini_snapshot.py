@@ -53,15 +53,22 @@ EXAMPLE_QUERIES = (
 )
 
 
+def canonical_order(df: pd.DataFrame) -> pd.DataFrame:
+    """Ordem canônica do acervo: mais popular primeiro; empate decidido pelo ``id``.
+
+    O desempate é necessário: o snapshot real tem muitos valores de ``popularity``
+    repetidos, e sem ele a ordem (e a seleção) dependeria da ordem de entrada.
+    """
+    return df.sort_values(["popularity", "id"], ascending=[False, True]).reset_index(drop=True)
+
+
 def _read_source(source_dir: Path) -> tuple[pd.DataFrame, dict]:
     """Lê o snapshot real, resolvendo o nome do parquet pelo ``snapshot_id``."""
     with open(source_dir / "snapshot_meta.json", encoding="utf-8") as f:
         meta = json.load(f)
     parquet = source_dir / f"movies_ptbr_{meta['snapshot_id']}.parquet"
     df = pd.read_parquet(parquet)
-    # Ordem canônica: mais popular primeiro; empate decidido pelo id.
-    df = df.sort_values(["popularity", "id"], ascending=[False, True]).reset_index(drop=True)
-    return df, meta
+    return canonical_order(df), meta
 
 
 def _document_text(row: pd.Series) -> str:
