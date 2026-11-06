@@ -40,12 +40,12 @@
 **Depende de:** 1. **Decisões:** adulto (adendo D-004), formato final do parquet (D-016).
 
 - [ ] `collect.filters`: ≥ 5 palavras na sinopse, `vote_count ≥ 2`, `adult=false`; motivo de rejeição por filme
-- [ ] `collect.pipeline`: percorre candidatos até 20.000 aceitos; checkpoint incremental e retomada
+- [ ] `collect.pipeline`: busca detalhes dos top 20.000 candidatos e filtra (D-027); checkpoint incremental e retomada
 - [ ] `collect.snapshot`: escreve parquet e `snapshot_meta.json` (esquema de `architecture.md`)
 - [ ] Verificações de dados: contagem após cada filtro, nulos por coluna, IDs duplicados, distribuição do tamanho das sinopses, tamanho do arquivo
 - [ ] Rodar a coleta completa localmente; commitar o snapshot (se ≤ 50 MB)
 
-**Critério de conclusão:** parquet com 20.000 linhas passando nas verificações, meta preenchido, retomada testada interrompendo a coleta.
+**Critério de conclusão:** parquet com ≤ 20.000 linhas (quantas passarem nos filtros) passando nas verificações, meta preenchido, retomada testada interrompendo a coleta.
 **Teach-back:** o que está em `snapshot_meta.json` e por que.
 
 ## Sprint 3 — Pré-processamento PT-BR

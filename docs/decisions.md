@@ -25,7 +25,7 @@ Regra: decisão `aceita` não se edita; para mudar, nova entrada com `Revoga: D-
 ### D-004 · 2026-11-05 · Filtros de qualidade
 - **Decisão:** manter filme se `overview` (PT-BR) tem ≥ 5 palavras **e** `vote_count ≥ 2`.
 - **Decidido por:** R · **Status:** aceita
-- **Adendo (proposta, C):** excluir também `adult=true`, por causa do público (inclui ensino médio). **Status do adendo:** proposta
+- **Adendo (proposta, C):** excluir também `adult=true`, por causa do público (inclui ensino médio). **Status do adendo:** aceita
 
 ### D-005 · 2026-11-05 · Modelo da v1: apenas TF-IDF + cosseno
 - **Decisão:** sem BM25, sem embeddings. Motivo: público leigo + determinismo + explicabilidade exata. BM25 pode entrar em versão futura.
@@ -131,6 +131,38 @@ Regra: decisão `aceita` não se edita; para mudar, nova entrada com `Revoga: D-
   - Sem concorrência no Sprint 1 (cliente sequencial). `max_concurrency` será usado pelo pipeline na Sprint 2.
 - **Verificado:** rate limit documentado como ~40 req/s sem limites formais publicados.
 - **Decidido por:** C · **Status:** proposta
+
+### D-024 · 2026-11-05 · Formato do checkpoint incremental
+- **Contexto:** o pipeline (Sprint 2) precisa retomar a coleta sem re-buscar filmes já processados na API.
+- **Decisão:**
+  - `data/checkpoints/accepted_movies.jsonl` — JSON bruto completo de cada filme aceito (uma linha por filme).
+  - `data/checkpoints/progress.jsonl` — `{"id": int, "status": "accepted"|"rejected"|"error", "reason": str|null}` por candidato processado.
+  - Retomada: carrega os dois arquivos; pula candidatos cujo ID já aparece em `progress.jsonl`.
+  - Flush a cada N candidatos processados (`snapshot.checkpoint_interval` em `config.yaml`, padrão 500).
+- **Motivo:** `progress.jsonl` fornece estatísticas de rejeição para `snapshot_meta.json`; `accepted_movies.jsonl` evita re-fetch.
+- **Decidido por:** C · **Status:** proposta
+
+### D-025 · 2026-11-05 · Validações do snapshot
+- **Decisão:** após escrever o parquet, verificar:
+  - Contagem de linhas == nº de aceitos
+  - Sem IDs duplicados
+  - Nenhum `overview` nulo ou com < 5 palavras
+  - Todo `vote_count >= 2`
+  - Colunas obrigatórias nunca nulas: `id`, `title`, `overview`
+  - Colunas que admitem nulo: `poster_path`, `tagline`, `runtime`, `director`, `release_date`
+- **Registrar no meta:** contagem por motivo de rejeição, distribuição de tamanho de sinopse (mín/mediana/máx palavras), tamanho do arquivo em disco.
+- **Decidido por:** C · **Status:** proposta
+
+### D-026 · 2026-11-05 · Pipeline de coleta sequencial
+- **Contexto:** D-023 mencionava `max_concurrency` para Sprint 2, mas a concorrência com threads adiciona complexidade (rate-limiter compartilhado, tratamento de erro em threads) sem ganho significativo para uma coleta que roda uma vez.
+- **Decisão:** pipeline sequencial usando `TmdbClient` diretamente. `max_concurrency` em `config.yaml` fica como placeholder para versão futura.
+- **Motivo:** código mais simples e explicável (teach-back); a taxa de 20 req/s sequencial já é suficiente (~30–60 min para o corpus).
+- **Decidido por:** C · **Status:** proposta
+
+### D-027 · 2026-11-06 · target_size = candidatos a buscar, não aceitos (Revoga: D-003)
+- **Contexto:** D-003 dizia "até aceitar 20.000 filmes". A intenção original do Rafael sempre foi **buscar os detalhes dos 20.000 candidatos mais populares** e depois filtrar. O parquet terá ≤ 20.000 linhas (quantas passarem nos filtros).
+- **Decisão:** `target_size` define quantos candidatos consultar na API (os top N por popularidade). Os filtros (D-004) rodam sobre esses N. O corpus final tem tantas linhas quantas passarem.
+- **Decidido por:** R · **Status:** aceita
 
 ---
 
