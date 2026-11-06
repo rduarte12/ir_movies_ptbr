@@ -33,8 +33,6 @@ reduzi-la depois de fazer o ensaio descrito em
   contrato do serviço de busca e o acervo mínimo de testes.
 - **Não verificado:** execução do notebook 02 no Colab, ensaio de 2 horas contínuas, execução
   local pelo plano B e teste dos textos da tela com pessoas leigas.
-- **Não verificado:** o endereço do repositório nos comandos do Colab abaixo
-  (`github.com/rduarte12/ir_movies_ptbr`). Confira antes de publicar.
 - O comportamento da interface descrito aqui segue `docs/ui_spec.md` e `docs/architecture.md`.
 
 ## Como rodar no Colab
@@ -145,7 +143,7 @@ estão em [`docs/architecture.md`](docs/architecture.md) (seção 5).
 Com o ambiente de desenvolvimento (`python -m pip install -r requirements-dev.txt`):
 
 ```
-python -m pytest              # testes automáticos, sem rede
+python -m pytest              # testes automáticos (sem rede, depois do primeiro download das stopwords)
 python -m ruff check .        # lint
 python -m ruff format .        # formatação
 python -m jupytext --sync notebooks/*.py   # sincroniza .py <-> .ipynb

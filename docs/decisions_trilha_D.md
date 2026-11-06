@@ -70,8 +70,11 @@
   4. antes de executar, o subprocesso troca `gradio.Blocks.launch` por uma função que levanta
      erro: se alguma célula tentar abrir servidor, o teste falha. Esta é a prova de "nenhum
      servidor aberto" (e não a ausência de erro).
-  - O teste afirma: código de saída 0, que todas as células rodaram, e que `launch` nunca foi
-    chamado. Tempo limite do subprocesso: 180 s.
+  - O teste afirma: código de saída 0, que ao menos uma célula de código foi executada
+    (`CELLS_EXECUTED >= 1`; não compara com o total de células), que ao menos um `gradio.Blocks`
+    foi criado, e que `launch` nunca foi chamado. Tempo limite do subprocesso: 180 s.
+  - O teste executa o `.py`, e o README manda abrir o `.ipynb`; a equivalência dos dois é
+    garantida por teste de sincronia à parte (D-077).
 - **Alternativa descartada:** `nbclient`/`nbconvert`: dependência nova. Se o Rafael autorizar, o
   teste pode migrar para o executor padrão sem mudar o que ele afirma.
 - **Limitação:** não é um kernel Jupyter de verdade; magics e comandos de shell são ignorados.
@@ -128,4 +131,18 @@
   (depende da integração das três frentes) e a tag `v1.0` (publicação é do Rafael; criar tag
   está fora do que se faz neste fluxo). O item do README só é marcado com a ressalva de que o
   critério "reproduzível do zero" depende de um ensaio de instalação feito pelo autor.
+- **Origem:** C · **Status:** proposta
+
+### D-077 · 2026-11-06 · Teste de sincronia entre o `.py` e o `.ipynb` dos notebooks
+- **Contexto:** o teste de fumaça (D-072) executa `notebooks/02_search_app.py`, mas o README manda
+  abrir o `.ipynb` no Colab e no Jupyter. Sem verificação de sincronia, o teste provaria um
+  arquivo que o usuário não executa.
+- **Decisão:** `tests/test_notebook_sync.py` lê cada par com `jupytext` e compara, célula a
+  célula, o tipo e o texto-fonte (sem saídas, metadados nem contadores de execução). Se o `.py`
+  e o `.ipynb` divergirem, o teste falha e indica `python -m jupytext --sync notebooks/*.py`.
+  Vale para todos os `notebooks/*.py`.
+- **Alternativa descartada:** executar também o `.ipynb` no teste de fumaça. Exigiria um executor
+  de notebook (dependência nova, D-072) para provar o mesmo que a sincronia já garante.
+- **Consequência:** na integração, quem alterar o notebook 02 deve rodar o `--sync`; do contrário
+  este teste falha.
 - **Origem:** C · **Status:** proposta
