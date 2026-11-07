@@ -75,6 +75,7 @@ import ir_movies  # noqa: E402
 from ir_movies.config import load_config  # noqa: E402
 from ir_movies.ui.app import build_app  # noqa: E402
 from ir_movies.ui.format import format_score  # noqa: E402
+from ir_movies.ui.styles import FORCE_LIGHT_JS  # noqa: E402
 
 cfg = load_config(project_root / "config.yaml")
 
@@ -137,7 +138,7 @@ for hit in previa.hits[:5]:
 demo = build_app(service, cfg)
 
 if os.environ.get("IR_MOVIES_NO_LAUNCH") != "1":
-    demo.launch(share=True, inline=False)
+    demo.launch(share=True, inline=False, js=FORCE_LIGHT_JS)
 else:
     print("Tela montada; lançamento desativado por IR_MOVIES_NO_LAUNCH=1.")
 

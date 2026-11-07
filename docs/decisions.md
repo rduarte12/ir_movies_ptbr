@@ -665,6 +665,23 @@ R = autor do projeto; C = proposta técnica (sempre `proposta` até confirmaçã
   este teste falha.
 - **Origem:** C · **Status:** aceita
 
+### D-078 · 2026-11-06 · Tema claro forçado via FORCE_LIGHT_JS
+- **Decisão:** a constante `FORCE_LIGHT_JS` em `ui/styles.py` é passada a `demo.launch(js=...)`
+  no notebook 02. Se `?__theme` não for `"light"`, recarrega a página com esse parâmetro,
+  forçando o tema claro do Gradio independentemente do tema do sistema.
+- **Alternativa descartada:** adaptar a paleta de cores ao modo escuro.
+- **Motivo:** a demo é projetada na feira; contraste e cores previsíveis são requisito, e manter
+  duas paletas aumentaria o risco de regressão sem benefício real para o contexto de projeção.
+- **Origem:** C · **Status:** proposta
+
+### D-079 · 2026-11-06 · CSS escopado por #ir-movies-app via gr.Column
+- **Contexto:** o parâmetro `elem_id` do `gr.Blocks` não é emitido no HTML pelo Gradio 6.31.0,
+  portanto o seletor `#ir-movies-app` nunca existiria se dependesse do `Blocks`.
+- **Decisão:** o conteúdo da interface é envolvido por um `gr.Column(elem_id="ir-movies-app")`;
+  todos os seletores `.fu-*` do CSS são prefixados com `#ir-movies-app`, garantindo que os
+  estilos só se apliquem ao escopo correto e não vençam o `.prose *` do Gradio.
+- **Origem:** C · **Status:** proposta
+
 ---
 
 ## Questões abertas

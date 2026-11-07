@@ -228,3 +228,5 @@ data/raw/
 data/checkpoints/
 # arquivos especificos
 rascunho_commits.txt
+# Gradio (certificado TLS criado por share=True)
+.gradio/
