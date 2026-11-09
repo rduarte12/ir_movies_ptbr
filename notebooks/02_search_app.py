@@ -106,6 +106,8 @@ print(f"Resultados:    {cfg['search']['top_k']} por busca")
 if "service" not in globals():
     from ir_movies.query.service import SearchService
 
+    # from_config tenta carregar a etapa semântica quando semantic.enabled = true
+    # e cai para TF-IDF puro com aviso no log se os vetores não existirem (D-097).
     service = SearchService.from_config(project_root / "config.yaml")
 
 print(f"Acervo:  {service.snapshot_id}")

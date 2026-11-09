@@ -168,7 +168,9 @@ class TestResultShape:
         result = service.search(QUERY_WITH_HITS)
         assert [h.rank for h in result.hits] == list(range(1, len(result.hits) + 1))
 
-    def test_scores_are_descending(self, service):
+    def test_scores_are_descending_without_semantic(self, service):
+        """Hits ordenados por score TF-IDF decrescente quando semântica inativa (D-096)."""
+        assert not service.semantic_active, "fixture deve ter semântica inativa"
         scores = [h.score for h in service.search(QUERY_WITH_HITS).hits]
         assert scores == sorted(scores, reverse=True)
 
@@ -186,6 +188,12 @@ class TestResultShape:
     def test_snapshot_id_and_app_version_are_reported(self, service):
         assert service.snapshot_id
         assert service.app_version
+
+    def test_semantic_active_is_bool(self, service):
+        assert isinstance(service.semantic_active, bool)
+
+    def test_semantic_active_false_by_default(self, service):
+        assert service.semantic_active is False
         assert service.search(QUERY_WITH_HITS).snapshot_id == service.snapshot_id
 
     def test_latency_is_measured(self, service):

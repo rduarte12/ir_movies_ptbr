@@ -31,11 +31,20 @@ tfidf:
   min_df: 1                  # D-015; Q-004 resolvida
 
 search:
-  top_k: 20                  # resultados por busca quando k=None (D-090, D-037)
+  top_k: 40                  # resultados por busca quando k=None (D-090, D-037)
 
 logging:
   dir: "logs"                # D-030: no Colab, o autor baixa os arquivos à mão; nunca vai ao git
   enabled: true              # false: nada é criado nem escrito (D-033)
+
+semantic:
+  enabled: true             # D-098: false = TF-IDF puro (comportamento da v1)
+  model: "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"  # D-093
+  revision: "e8f8c211226b894fcb81acc59f3b34ba3efd5f42"  # D-093: commit fixado (PASSO 4)
+  embeddings_dir: "data"     # D-094: pasta para .npy e .json (relativo à raiz do projeto)
+  candidates: 40             # D-096: top-k semântico antes do RRF
+  rrf_k: 60                  # D-095: parâmetro k do RRF (Cormack 2009)
+  batch_size: 32             # tamanho do lote para build_embeddings.py
 
 ui:
   app_name: "FilmUSP"        # D-050: Q-005 resolvida

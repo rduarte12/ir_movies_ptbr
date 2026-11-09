@@ -82,6 +82,10 @@ LEVEL3_NONE = "nenhuma"
 NO_MATCHED_WORDS = "Nenhuma palavra da sua pergunta aparece neste filme."
 WAITING_FOR_SEARCH = "Faça uma busca para ver a explicação."
 
+# --- Etapa semântica (D-100) ---
+
+SEMANTIC_NOTICE = "Primeiro, sua pergunta passa por uma IA que entende o significado."
+
 # --- Estados (ui_spec.md secao 2) ---
 # Textos copiados da especificação, palavra por palavra.
 

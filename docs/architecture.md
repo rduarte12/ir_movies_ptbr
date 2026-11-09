@@ -10,7 +10,13 @@
                                   (notebook 01, local)
 
 snapshot.parquet -> pré-processar -> TfidfIndex (em memória)
-consulta bruta -> Rewriter -> pré-processar -> TfidfIndex.search -> hits -> Explicabilidade
+                -> SemanticRetriever (opcional, D-092) <- embeddings_<slug>_<id>.npy
+
+consulta bruta -> Rewriter -> pré-processar
+    [sem semântica]  -> TfidfIndex.search -> hits -> Explicabilidade
+    [com semântica]  -> SemanticRetriever.top_k (20 candidatos)
+                     -> TfidfIndex.score_subset (IDF do corpus inteiro)
+                     -> RRF(k=60) -> hits (score=TF-IDF, rrf_score=RRF) -> Explicabilidade
                                   (notebook 02, Colab/local)           \-> QueryLogger (JSONL)
 ```
 
@@ -32,13 +38,13 @@ ir_movies_ptbr/
 │   ├── tmdb/            # ids.py, client.py
 │   ├── collect/         # pipeline.py, filters.py, snapshot.py
 │   ├── text/            # preprocess.py
-│   ├── index/           # tfidf.py
-│   ├── query/           # rewriter.py, service.py
+│   ├── index/           # tfidf.py, semantic.py
+│   ├── query/           # rewriter.py, service.py (+ types.py: Encoder, semantic_active)
 │   ├── explain.py
 │   ├── logging_jsonl.py
 │   └── ui/              # app.py
 ├── tests/ (+ fixtures/)
-├── data/ (snapshot versionado; raw/ e checkpoints/ ignorados)
+├── data/ (snapshot + vetores semânticos versionados; raw/ e checkpoints/ ignorados)
 ├── logs/ (ignorado)
 └── docs/
 ```
@@ -56,7 +62,10 @@ ir_movies_ptbr/
 | `text.preprocess` | `Preprocessor.trace(text)` | texto | `PreprocessTrace`: tokens originais, ignorados (stopwords), radicais, mapa radical→formas de superfície |
 | `index.tfidf` | `TfidfIndex.build(docs, preprocessor, cfg)` | textos dos documentos | índice (matriz esparsa L2-normalizada) |
 | `index.tfidf` | `TfidfIndex.search(query, k)` | consulta já reescrita | `list[Hit(doc_id, score)]` desc, estável em empates (desempate por `doc_id`) |
+| `index.tfidf` | `TfidfIndex.score_subset(query, doc_ids)` | consulta + lista de doc_ids | `list[Hit]` com IDF do corpus inteiro (D-096) |
 | `index.tfidf` | `TfidfIndex.contributions(query, doc_id)` | consulta, documento | `list[TermContribution(stem, surface_forms, idf, q_weight, d_weight, contribution)]` |
+| `index.semantic` | `SemanticRetriever.top_k(query, k)` | consulta bruta | `list[(doc_id, score)]` semântico, desc (D-092) |
+| `index.semantic` | `load_semantic_retriever(cfg, snapshot_id, encoder)` | config + encoder | `SemanticRetriever` validado; levanta exceção se incompatível (D-097) |
 | `query.rewriter` | `Rewriter.rewrite(raw)` (protocolo) | consulta bruta | consulta efetiva. `IdentityRewriter` na v1 |
 | `query.service` | `SearchService.search(raw, k, session_id)` | consulta bruta | `SearchResult`: raw, effective, trace, hits, termos fora do acervo, latência |
 | `explain` | `highlight(text, contributions, text_cfg=None)` | sinopse + lista de `TermContribution` (a que o serviço já devolve) | segmentos `(texto, intensidade \| None)` |
@@ -70,6 +79,7 @@ ir_movies_ptbr/
 3. Mesma consulta + mesmo snapshot + mesma config = mesmo ranking (determinismo).
 4. Consulta sem nenhum termo no vocabulário retorna lista vazia (a UI trata o caso).
 5. O mesmo `Preprocessor` é usado para documentos e consultas.
+6. `MovieHit.score` é sempre o cosseno TF-IDF (invariante 1 intacto); a ordenação quando semântica ativa é por `rrf_score` (D-096).
 
 ## 4. Esquema do snapshot (`data/movies_ptbr_YYYYMMDD.parquet`)
 
@@ -125,6 +135,8 @@ text:       {stemmer: snowball_pt, extra_stopwords: [...], strip_accents: true}
 tfidf:      {ngram_range: [1,1], norm: l2, smooth_idf: true, sublinear_tf: false, min_df: 1}
 search:     {top_k: 20}
 logging:    {dir: logs, enabled: true}
+semantic:   {enabled: false, model: <str>, revision: <commit>, embeddings_dir: data,
+             candidates: 20, rrf_k: 60, batch_size: 32}
 ui:         {app_name: <str>}
 ```
 

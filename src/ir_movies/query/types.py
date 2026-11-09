@@ -9,11 +9,16 @@ As assinaturas seguem ``docs/architecture.md`` secao 3.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Protocol, runtime_checkable
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
+
+import numpy as np
 
 from ir_movies.index.tfidf import TermContribution
 from ir_movies.text.preprocess import PreprocessTrace
+
+if TYPE_CHECKING:
+    pass
 
 # Campo `model` do log (D-005: a v1 tem um único modelo).
 MODEL_NAME = "tfidf"
@@ -25,6 +30,7 @@ MAX_QUERY_CHARS = 300
 __all__ = [
     "MAX_QUERY_CHARS",
     "MODEL_NAME",
+    "Encoder",
     "Movie",
     "MovieHit",
     "QueryLoggerProtocol",
@@ -80,10 +86,16 @@ class MovieHit:
     """Posição na lista de resultados, começando em 1 (igual à tela e ao log)."""
 
     score: float
-    """Similaridade do cosseno entre a consulta e o documento."""
+    """Cosseno TF-IDF entre a consulta e o documento. Base da Explicabilidade (D-096)."""
 
     doc_id: int
     """Posição do filme no corpus; liga o resultado às contribuições por termo."""
+
+    semantic_score: float | None = field(default=None)
+    """Cosseno semântico (D-096). None quando a etapa semântica está inativa."""
+
+    rrf_score: float | None = field(default=None)
+    """Pontuação RRF combinada (D-095, D-096). None quando a etapa semântica está inativa."""
 
 
 @dataclass(frozen=True)
@@ -100,7 +112,9 @@ class SearchResult:
     """Rastreio do pré-processamento, base do nível 3 da Explicabilidade."""
 
     hits: list[MovieHit]
-    """Resultados em ordem decrescente de pontuação; vazio é um caso válido."""
+    """Resultados ordenados pela pontuação final (D-096): cosseno TF-IDF decrescente
+    quando a etapa semântica está inativa; pontuação RRF decrescente quando ativa.
+    Vazio é um caso válido."""
 
     oov_terms: list[str]
     """Radicais da consulta que não existem no acervo (nível 3d da tela)."""
@@ -110,6 +124,19 @@ class SearchResult:
 
     snapshot_id: str
     """Identificador do acervo usado, para rastreabilidade do log e do rodapé."""
+
+
+@runtime_checkable
+class Encoder(Protocol):
+    """Codificação densa de textos para a etapa semântica (D-093, D-094).
+
+    A implementação de produção usa ``sentence-transformers``; os testes usam
+    ``FakeEncoder`` com vetores pequenos e fixos.
+    """
+
+    def encode(self, texts: list[str]) -> np.ndarray:
+        """Devolve matriz ``(N, D) float32`` L2-normalizada, onde ``N = len(texts)``."""
+        ...
 
 
 @runtime_checkable
@@ -163,11 +190,16 @@ class SearchServiceProtocol(Protocol):
     2. ``search`` trunca a consulta em ``MAX_QUERY_CHARS``.
     3. Para todo ``hit``, a soma de ``contributions(result.effective_query,
        hit.doc_id)`` é igual a ``hit.score`` com tolerância de 1e-9
-       (invariante 1 de ``architecture.md``).
+       (invariante 1 de ``architecture.md``). ``hit.score`` é sempre o cosseno
+       TF-IDF, independentemente da etapa semântica (D-096).
     4. ``search`` só registra no log quando recebe ``session_id``;
        ``log_click`` registra sempre.
     5. Determinismo: a mesma consulta no mesmo acervo devolve os mesmos
        ``hits``, na mesma ordem (invariante 3 de ``architecture.md``).
+    6. Ordenação (D-096): quando a etapa semântica está inativa, ``hits`` estão
+       em ordem decrescente de ``score`` (TF-IDF). Quando ativa, em ordem
+       decrescente de ``rrf_score`` (desempate pelo posto semântico). Em ambos
+       os casos, ``rank`` é consecutivo começando em 1.
     """
 
     @property
@@ -178,6 +210,15 @@ class SearchServiceProtocol(Protocol):
     @property
     def app_version(self) -> str:
         """Versão da aplicação (rodapé e log)."""
+        ...
+
+    @property
+    def semantic_active(self) -> bool:
+        """Indica se a etapa semântica está de fato ativa (D-097, D-100).
+
+        ``False`` quando desligada por config, quando os vetores não carregaram
+        ou quando o modelo falhou ao inicializar (falha suave).
+        """
         ...
 
     def search(
