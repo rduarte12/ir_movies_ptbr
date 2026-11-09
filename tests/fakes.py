@@ -19,10 +19,13 @@ O que é de fato falso aqui: a origem dos dados (fixture, não snapshot) e o log
 
 from __future__ import annotations
 
+import hashlib
 import json
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
+
+import numpy as np
 
 from ir_movies.index.tfidf import TermContribution, TfidfIndex
 from ir_movies.query.types import (
@@ -51,6 +54,30 @@ TFIDF_CFG = {
 _NO_POSTER_IDS = frozenset({5})
 _NO_RUNTIME_IDS = frozenset({5})
 _NO_TAGLINE_IDS = frozenset({4})
+
+
+FAKE_ENCODER_DIM = 4
+"""Dimensão dos vetores do FakeEncoder; pequena para manter os testes rápidos."""
+
+
+class FakeEncoder:
+    """Encoder falso para testes: vetores 4-D fixos por texto, L2-normalizados.
+
+    Determinístico: o mesmo texto sempre produz o mesmo vetor. Obedece ao
+    protocolo ``Encoder`` de ``query/types.py``.
+    """
+
+    dim: int = FAKE_ENCODER_DIM
+
+    def encode(self, texts: list[str]) -> np.ndarray:
+        result = np.zeros((len(texts), self.dim), dtype=np.float32)
+        for i, text in enumerate(texts):
+            seed = int(hashlib.md5(text.encode()).hexdigest()[:8], 16) % (2**32)
+            rng = np.random.default_rng(seed)
+            vec = rng.standard_normal(self.dim).astype(np.float32)
+            norm = np.linalg.norm(vec)
+            result[i] = vec / max(norm, 1e-8)
+        return result
 
 
 class IdentityRewriterStub:
@@ -188,6 +215,11 @@ class FakeSearchService:
     @property
     def app_version(self) -> str:
         return self._app_version
+
+    @property
+    def semantic_active(self) -> bool:
+        """Sempre False: o serviço de brinquedo não tem etapa semântica."""
+        return False
 
     def search(
         self,
