@@ -37,6 +37,15 @@ logging:
   dir: "logs"                # D-030: no Colab, o autor baixa os arquivos à mão; nunca vai ao git
   enabled: true              # false: nada é criado nem escrito (D-033)
 
+semantic:
+  enabled: false             # D-098: false = TF-IDF puro (comportamento da v1)
+  model: "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"  # D-093
+  revision: ""               # D-093: commit fixado após build_embeddings.py (vazio até lá)
+  embeddings_dir: "data"     # D-094: pasta para .npy e .json (relativo à raiz do projeto)
+  candidates: 20             # D-096: top-k semântico antes do RRF
+  rrf_k: 60                  # D-095: parâmetro k do RRF (Cormack 2009)
+  batch_size: 32             # tamanho do lote para build_embeddings.py
+
 ui:
   app_name: "FilmUSP"        # D-050: Q-005 resolvida
   grid_columns: 5            # ui_spec.md secao 1.3: grade de pôsteres
