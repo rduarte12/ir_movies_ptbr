@@ -5,15 +5,16 @@
 ## 1. Layout (de cima para baixo)
 
 1. **Cabeçalho:** nome do app + frase: "Descreva um filme do seu jeito e veja como o buscador pensa."
-2. **Busca:** caixa de texto (máx. 300 caracteres), botão "Buscar", exemplos clicáveis (ex.: "um tubarão assustador na praia", "robô que se apaixona").
-3. **Resultados:** grade de pôsteres (5 colunas, `top_k` = 20). Legenda: `Título (ano) · pontuação`. Sem pôster → imagem placeholder.
-4. **Detalhes do filme selecionado** (por padrão, o 1º resultado): pôster, título, título original, ano, duração, gêneros, nota TMDB, direção, elenco, sinopse.
-5. **Explicabilidade** (sempre visível, os 3 níveis ao mesmo tempo, para o filme selecionado):
+2. **Aviso semântico** (apenas quando `semantic.enabled = true`, D-100): uma linha, logo após o cabeçalho — "Primeiro, sua pergunta passa por uma IA que entende o significado." Nunca aparece quando a etapa está inativa ou falhou (D-097).
+3. **Busca:** caixa de texto (máx. 300 caracteres), botão "Buscar", exemplos clicáveis (ex.: "um tubarão assustador na praia", "robô que se apaixona").
+4. **Resultados:** grade de pôsteres (5 colunas, `top_k` = 20). Legenda: `Título (ano) · pontuação`. Sem pôster → imagem placeholder.
+5. **Detalhes do filme selecionado** (por padrão, o 1º resultado): pôster, título, título original, ano, duração, gêneros, nota TMDB, direção, elenco, sinopse.
+6. **Explicabilidade** (sempre visível, os 3 níveis ao mesmo tempo, para o filme selecionado):
    - **1 · Onde suas palavras aparecem:** a sinopse com as palavras que casaram destacadas; cor mais forte = contribuiu mais.
    - **2 · Quanto cada palavra pesou:** barras horizontais por palavra da pergunta (contribuição à pontuação). Selo "palavra rara"/"palavra comum" conforme o IDF.
    - **3 · Das palavras ao número (passo a passo):**
      a) sua pergunta; b) palavras ignoradas por serem comuns ("de", "o", "qual"…); c) palavras reduzidas ao radical ("assustador" → "assust"); d) palavras que **não existem** no acervo; e) tabela: radical · peso na pergunta · peso no filme · produto; f) soma dos produtos = pontuação (cosseno).
-6. **Rodapé:** atribuição TMDB ("Este produto usa a API da TMDB mas não é endossado nem certificado pela TMDB"), aviso "As buscas são registradas de forma anônima", versão do app e `snapshot_id`.
+7. **Rodapé:** atribuição TMDB ("Este produto usa a API da TMDB mas não é endossado nem certificado pela TMDB"), aviso "As buscas são registradas de forma anônima", versão do app e `snapshot_id`.
 
 ## 2. Estados e mensagens
 

@@ -118,3 +118,26 @@
 - [ ] Tag `v1.0`
 
 **Critério de conclusão:** repositório reproduzível do zero seguindo só o README.
+
+## Sprint 9 — Busca semântica opcional (pré-filtro + RRF)
+
+**Depende de:** 4 e 6. **Decisões:** D-092 a D-100.
+
+- [x] `SemanticRetriever` e `load_semantic_retriever` (`index/semantic.py`)
+- [x] `TfidfIndex.score_subset`: pontua subconjunto com IDF do corpus inteiro (D-096)
+- [x] `SearchService._search_hybrid`: pipeline semântico → TF-IDF → RRF (D-092, D-095)
+- [x] Falha suave: vetores ausentes/incompatíveis → TF-IDF puro + aviso no log (D-097)
+- [x] Toggle só via `semantic.enabled` no config (D-098)
+- [x] Aviso semântico na UI (D-100)
+- [x] `scripts/build_embeddings.py`: gera `.npy` + `.json` com metadados e revisão do modelo
+- [x] `scripts/measure_latency.py`: 50 consultas, mediana e p95
+- [x] Vetores `data/embeddings_..._20261106.{npy,json}` versionados (8 002 filmes, 384 dims)
+- [x] Revisão do modelo fixada em `config.yaml` (`semantic.revision`)
+- [x] Testes: 26 novos em `tests/test_semantic.py`; total passa (434 testes)
+- [ ] Ensaio no Colab com `semantic.enabled = true` — **pendência manual**
+- [ ] Teste offline com `HF_HUB_OFFLINE=1` no Colab — **pendência manual**
+- [ ] Inspeção manual de ~10 consultas comparando modos — **pendência manual**
+- [ ] Aceitar decisões D-092 a D-100 (atualmente `proposta`)
+
+**Critério de conclusão:** testes passam; latência p95 ≤ 200 ms (medido: 21,1 ms); modo on/off verificável via `semantic_active`.
+**Teach-back:** o que são embeddings, o que o RRF faz e por que `hit.score` continua sendo o cosseno TF-IDF.

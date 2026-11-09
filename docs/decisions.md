@@ -696,9 +696,9 @@ R = autor do projeto; C = proposta técnica (sempre `proposta` até confirmaçã
 
 ### D-093 · 2026-11-08 · Modelo semântico: paraphrase-multilingual-MiniLM-L12-v2
 - **Decisão:** usar `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` (384 dims).
-  A revisão exata do commit do modelo é registrada em `config.yaml` (`semantic.revision`) depois
-  de rodar `scripts/build_embeddings.py` (campo vazio até lá). O modelo é carregado com a
-  revisão fixada para garantir reprodutibilidade offline.
+  Revisão fixada: `e8f8c211226b894fcb81acc59f3b34ba3efd5f42` (confirmada após `build_embeddings.py`
+  via cache local do HF; registrada em `config.yaml` e no JSON de metadados). O modelo é carregado
+  com a revisão fixada para garantir reprodutibilidade offline.
 - **Alternativas descartadas:**
   - `multilingual-e5-small`: exige prefixos "query:" e "passage:", tornando o texto do
     documento diferente do que o TF-IDF indexa (D-094).

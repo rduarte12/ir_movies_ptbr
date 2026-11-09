@@ -50,7 +50,16 @@ sem queda. Duração mínima: 2 h 00 min sem interrupção do ensaio.
       (nenhum clique extra, nenhuma entrada de texto, nenhuma autorização).
 - [ ] Anotar qualquer aviso ou erro que apareceu no meio (copiar o texto): ______
 
-### B2. Rotina de 15 em 15 minutos
+### B1b. Verificar aviso semântico (Sprint 09)
+
+Quando `semantic.enabled: true` (padrão da fair demo):
+- [ ] Logo abaixo do cabeçalho, ver a linha: "Primeiro, sua pergunta passa por uma IA que entende o significado."
+- [ ] Mudar para `semantic.enabled: false` no `config.yaml`, reiniciar o serviço: a linha **não** deve aparecer.
+
+Latência com semântica ativa — o critério de 200 ms se aplica ao p95 inteiro:
+- [ ] Executar `python scripts/measure_latency.py` localmente; p95 deve ficar ≤ 200 ms.
+
+## B2. Rotina de 15 em 15 minutos
 
 Mantenha a aba do Colab aberta e visível o tempo todo (aba em segundo plano pode ser suspensa pelo
 navegador, e isso estraga a medição). A cada 15 minutos, **execute estas 6 buscas, nesta ordem**,
