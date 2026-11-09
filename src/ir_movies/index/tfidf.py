@@ -72,6 +72,24 @@ class TfidfIndex:
         ranked = sorted(nonzero_idx, key=lambda i: (-scores[i], i))
         return [Hit(doc_id=int(i), score=float(scores[i])) for i in ranked[:k]]
 
+    def score_subset(self, query: str, doc_ids: list[int]) -> list[Hit]:
+        """Pontua os doc_ids dados usando o IDF do corpus inteiro (D-096).
+
+        Não reajusta o vectorizer: o IDF é o mesmo do índice completo. Retorna
+        só os doc_ids com score > 0, em ordem decrescente de score.
+        """
+        q_vec = self._vectorizer.transform([query])
+        if q_vec.nnz == 0 or not doc_ids:
+            return []
+        subset = self._matrix[doc_ids]
+        scores = (subset @ q_vec.T).toarray().ravel()
+        hits = [
+            Hit(doc_id=int(doc_ids[i]), score=float(scores[i]))
+            for i in range(len(doc_ids))
+            if scores[i] > 0
+        ]
+        return sorted(hits, key=lambda h: (-h.score, h.doc_id))
+
     def contributions(self, query: str, doc_id: int) -> list[TermContribution]:
         """Decomposição do score: contribuição de cada termo da consulta."""
         q_vec = self._vectorizer.transform([query])
