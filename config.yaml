@@ -38,7 +38,7 @@ logging:
   enabled: true              # false: nada é criado nem escrito (D-033)
 
 semantic:
-  enabled: true              # D-098: true para medir latencia (PASSO 4)
+  enabled: false             # D-098: false = TF-IDF puro (comportamento da v1)
   model: "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"  # D-093
   revision: "e8f8c211226b894fcb81acc59f3b34ba3efd5f42"  # D-093: commit fixado (PASSO 4)
   embeddings_dir: "data"     # D-094: pasta para .npy e .json (relativo à raiz do projeto)
