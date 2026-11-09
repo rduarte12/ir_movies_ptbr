@@ -1,0 +1,17 @@
+{
+  "model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+  "revision": "e8f8c211226b894fcb81acc59f3b34ba3efd5f42",
+  "dimension": 384,
+  "max_seq_length": 128,
+  "n_docs": 8002,
+  "n_docs_truncated": 1956,
+  "snapshot_id": "20261106",
+  "created_utc": "2026-11-09T01:20:44.379713+00:00",
+  "elapsed_seconds": 243.69,
+  "versions": {
+    "torch": "2.15.0+cpu",
+    "sentence_transformers": "6.2.0",
+    "transformers": "5.22.2",
+    "numpy": "2.5.4"
+  }
+}
