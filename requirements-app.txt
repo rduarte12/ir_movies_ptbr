@@ -1,5 +1,10 @@
 # Dependências do notebook 02 (busca + UI) — Colab instala este arquivo.
 # Decisão: D-021. Versões fixadas com Python 3.13.
+#
+# ATENÇÃO — torch não está listado aqui:
+#   Colab: já pré-instalado (com GPU).
+#   Local : instale antes deste arquivo:
+#     pip install torch --index-url https://download.pytorch.org/whl/cpu
 
 scikit-learn==1.9.1
 numpy==2.5.4
@@ -10,7 +15,9 @@ pyarrow==26.0.1
 PyYAML==6.0.3
 python-dotenv==1.2.4
 gradio==6.31.0
-# Busca semântica (D-093). torch já instalado no Colab e no notebook local (não listado aqui).
-# Versão do torch neste ambiente: 2.15.0
+
+# Busca semântica (D-092, D-093): modelo paraphrase-multilingual-MiniLM-L12-v2.
+# Pesos baixados na primeira execução (~500 MB, Hugging Face) e ficam em cache local.
+# Desativar: semantic.enabled: false em config.yaml (nenhuma dessas libs é chamada).
 sentence-transformers==6.2.0
 transformers==5.22.2

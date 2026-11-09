@@ -11,6 +11,11 @@ quanto cada uma pesou e como essas palavras viram um número.
 
 - **Modelo:** TF-IDF com similaridade do cosseno. É determinístico: a mesma frase, no mesmo
   acervo, dá sempre o mesmo resultado.
+- **Pré-filtro semântico (opcional):** quando `semantic.enabled: true` em `config.yaml`, a busca
+  passa por um passo extra antes do TF-IDF — a consulta é codificada por
+  `paraphrase-multilingual-MiniLM-L12-v2` e os 40 filmes mais próximos em significado são usados
+  como candidatos. Os dois rankings são fundidos por RRF. A pontuação e a seção de explicabilidade
+  continuam sendo calculadas pelo TF-IDF. Com `false` (padrão), o comportamento é idêntico à v1.
 - **Acervo:** filmes com sinopse em português, coletados da TMDB (veja [Dados](#dados)).
 - **Explicabilidade:** a tela mostra, ao mesmo tempo e para o filme selecionado, três níveis:
   1. onde as palavras da busca aparecem na sinopse (destacadas);
@@ -19,21 +24,15 @@ quanto cada uma pesou e como essas palavras viram um número.
      a pontuação).
 - **Interface:** Gradio, em um notebook (Colab ou Jupyter local). Grade de pôsteres, detalhes do
   filme e a seção de explicabilidade. O desenho está em [`docs/ui_spec.md`](docs/ui_spec.md).
-- **Fora desta versão:** BM25, embeddings, busca híbrida, modelos de linguagem, login. Há apenas
-  o ponto de extensão para reescrever a consulta (`Rewriter`), com a implementação identidade
-  (a consulta passa como veio).
+- **Fora desta versão:** BM25, modelos de linguagem generativos, login. Há o ponto de extensão
+  para reescrever a consulta (`Rewriter`), com a implementação identidade (a consulta passa como
+  veio).
 
 ### Estado de verificação
 
-Esta seção descreve o que **ainda não foi verificado de ponta a ponta**. O autor deve apagá-la ou
-reduzi-la depois de fazer o ensaio descrito em
-[`docs/rehearsal_checklist.md`](docs/rehearsal_checklist.md).
-
-- Os testes automáticos (`python -m pytest`) cobrem coleta, pré-processamento, índice TF-IDF,
-  contrato do serviço de busca e o acervo mínimo de testes.
-- **Não verificado:** execução do notebook 02 no Colab, ensaio de 2 horas contínuas, execução
-  local pelo plano B e teste dos textos da tela com pessoas leigas.
-- O comportamento da interface descrito aqui segue `docs/ui_spec.md` e `docs/architecture.md`.
+- Testes automáticos (`python -m pytest`): 434 passando.
+- Latência (mediana/p95 com semântica ativa, 50 consultas): 14,9 ms / 21,1 ms — dentro do critério de 200 ms.
+- **Pendente:** ensaio de 2 h no Colab, teste com pessoas leigas, verificação do plano B local do zero.
 
 ## Como rodar no Colab
 
@@ -42,13 +41,15 @@ pôsteres do CDN da TMDB.
 
 1. Abra o notebook no Colab, pelo GitHub:
    `https://colab.research.google.com/github/rduarte12/ir_movies_ptbr/blob/main/notebooks/02_search_app.ipynb`
-2. Em **Ambiente de execução > Executar tudo**. Conforme o desenho em
-   [`docs/architecture.md`](docs/architecture.md) (seção 7), o notebook clona o repositório,
-   instala `requirements-app.txt` (veja [Versões](#versões-e-dependências)), carrega o acervo e
-   abre a interface.
-3. Meta de tempo, de um ambiente novo do Colab até a tela pronta: até 5 minutos, sem passos
-   manuais (meta de `docs/project_scope.md`; **ainda não medida**).
-4. O log de consultas fica no disco do Colab, que é apagado quando o ambiente é encerrado. Baixe o
+2. Em **Ambiente de execução > Executar tudo**. O notebook clona o repositório, instala
+   `requirements-app.txt` (veja [Versões](#versões-e-dependências)), carrega o acervo e abre a
+   interface. `torch` já vem pré-instalado no Colab.
+3. Se `semantic.enabled: true` em `config.yaml` (padrão atual), na primeira execução o modelo
+   semântico é baixado do Hugging Face (~500 MB, Colab tem internet). Os vetores do acervo já
+   estão em `data/` (no repositório). O modelo é carregado uma vez por sessão do Colab.
+4. Meta de tempo, de um ambiente novo do Colab até a tela pronta: até 5 minutos, sem passos
+   manuais (meta de `docs/project_scope.md`).
+5. O log de consultas fica no disco do Colab, que é apagado quando o ambiente é encerrado. Baixe o
    arquivo de `logs/` antes de encerrar (veja [Privacidade](#privacidade)).
 
 Se o Colab cair durante uma demonstração, use o plano B local e o roteiro de contingência em
@@ -56,8 +57,8 @@ Se o Colab cair durante uma demonstração, use o plano B local e o roteiro de c
 
 ## Como rodar localmente (plano B)
 
-Requisito: **Python 3.13** (`>=3.13,<3.14`, a mesma versão do Colab). Os exemplos usam um
-ambiente virtual (`venv`), que já vem com o Python.
+Requisitos: **Python 3.13** (`>=3.13,<3.14`, a mesma versão do Colab) e **PyTorch** (veja abaixo).
+Os exemplos usam um ambiente virtual (`venv`), que já vem com o Python.
 
 **Windows (PowerShell):**
 
@@ -66,6 +67,8 @@ git clone https://github.com/rduarte12/ir_movies_ptbr.git
 cd ir_movies_ptbr
 py -3.13 -m venv .venv
 .\.venv\Scripts\Activate.ps1
+# torch (CPU) — precisa ser instalado antes do requirements-app.txt
+python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
 python -m pip install -r requirements-app.txt
 ```
 
@@ -76,6 +79,8 @@ git clone https://github.com/rduarte12/ir_movies_ptbr.git
 cd ir_movies_ptbr
 python3.13 -m venv .venv
 source .venv/bin/activate
+# torch (CPU) — precisa ser instalado antes do requirements-app.txt
+python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
 python -m pip install -r requirements-app.txt
 ```
 
@@ -87,11 +92,18 @@ Observações:
 - **Jupyter não está em nenhum dos arquivos de requirements** do projeto. Instale à parte
   (por exemplo, `python -m pip install jupyterlab`) se ainda não o tiver. A versão não é fixada
   pelo projeto.
-- Na primeira execução, o pré-processamento baixa a lista de palavras comuns (*stopwords*) do
-  NLTK. Isso exige internet **uma vez**; depois fica em cache na máquina. Para o plano B em um
-  local sem internet, faça uma execução prévia com internet.
+- **torch (PyTorch)** não está no `requirements-app.txt` porque o Colab já vem com ele (com GPU).
+  No plano B local, o comando acima instala a versão CPU, que é suficiente para inferência.
+- Se `semantic.enabled: true`, o modelo semântico é carregado na primeira execução. Os pesos são
+  baixados do Hugging Face (~500 MB) e ficam em cache em `~/.cache/huggingface/`. Nas execuções
+  seguintes o carregamento é instantâneo. Para rodar **sem internet** após o primeiro download:
+  ```
+  HF_HUB_OFFLINE=1 jupyter lab
+  ```
+- Na primeira execução, o pré-processamento baixa as *stopwords* do NLTK (pequeno, ~1 KB). Depois
+  fica em cache. Para o plano B offline, faça uma execução prévia com internet.
 - Os pôsteres vêm do CDN da TMDB. Sem internet, os pôsteres não aparecem (a busca continua
-  funcionando, porque o acervo está no repositório).
+  funcionando, pois o acervo está no repositório).
 
 ### Variável `IR_MOVIES_NO_LAUNCH`
 
@@ -104,11 +116,12 @@ Todas as bibliotecas têm versão exata fixada (`==`). Há três arquivos:
 
 | Arquivo | Para que serve | Quem instala |
 |---|---|---|
-| `requirements-app.txt` | Notebook 02 (busca e interface): scikit-learn, numpy, nltk, Unidecode, pandas, pyarrow, PyYAML, python-dotenv, gradio | Colab e plano B local |
+| `requirements-app.txt` | Notebook 02 (busca e interface): scikit-learn, numpy, nltk, Unidecode, pandas, pyarrow, PyYAML, python-dotenv, gradio, sentence-transformers, transformers | Colab e plano B local |
 | `requirements-collect.txt` | Notebook 01 (coleta na TMDB): requests, tenacity, pandas, pyarrow, PyYAML, python-dotenv | Máquina local, só para recoletar os dados |
 | `requirements-dev.txt` | Desenvolvimento: inclui os dois acima mais pytest, ruff, jupytext e nbstripout | Quem for alterar o código |
 
-Python: `>=3.13,<3.14`.
+Python: `>=3.13,<3.14`. **torch não está listado** porque o Colab já o inclui; no plano B local,
+instale separado (veja [Como rodar localmente](#como-rodar-localmente-plano-b)).
 
 ## Dados
 
@@ -121,6 +134,9 @@ Python: `>=3.13,<3.14`.
   (`snapshot_id` `20261106`). Tem **8.002 filmes** e é o que o notebook 02 lê; a lista de colunas
   está em [`docs/architecture.md`](docs/architecture.md) (seção 4). O `snapshot_meta.json`
   registra filtros, contagens e rejeições por motivo.
+- **Vetores semânticos** em `data/`: `embeddings_sentence_transformers_paraphrase_multilingual_minilm_l12_v2_20261106.npy`
+  (8.002 × 384, float32) e o JSON de metadados com a mesma base de nome. Usados quando
+  `semantic.enabled: true`. Gerados com `scripts/build_embeddings.py` a partir do snapshot acima.
 - **Texto indexado:** título + tagline + sinopse + gêneros.
 - **Pôsteres:** não são baixados nem guardados no repositório; a interface usa as URLs do CDN da
   TMDB.
@@ -159,10 +175,13 @@ python scripts/make_mini_snapshot.py
 
 ```
 config.yaml              parâmetros (nada de números mágicos no código)
-data/                    snapshot versionado (parquet + meta)
+data/                    snapshot versionado (parquet + meta + vetores semânticos)
 docs/                    escopo, arquitetura, interface, decisões, plano e diários
 notebooks/               01 (coleta) e 02 (app), em par .py (jupytext) e .ipynb
-scripts/                 utilitários (acervo mínimo de testes)
+scripts/
+  make_mini_snapshot.py  gera acervo mínimo para os testes (30 filmes)
+  build_embeddings.py    gera vetores semânticos a partir do snapshot (exige torch)
+  measure_latency.py     mede latência de busca (50 consultas, mediana e p95)
 src/ir_movies/           a lógica: coleta, pré-processamento, índice, busca, explicação, interface
 tests/                   testes e fixtures
 ```
