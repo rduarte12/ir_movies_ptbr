@@ -38,9 +38,9 @@ logging:
   enabled: true              # false: nada é criado nem escrito (D-033)
 
 semantic:
-  enabled: false             # D-098: false = TF-IDF puro (comportamento da v1)
+  enabled: true              # D-098: true para medir latencia (PASSO 4)
   model: "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"  # D-093
-  revision: ""               # D-093: commit fixado após build_embeddings.py (vazio até lá)
+  revision: "e8f8c211226b894fcb81acc59f3b34ba3efd5f42"  # D-093: commit fixado (PASSO 4)
   embeddings_dir: "data"     # D-094: pasta para .npy e .json (relativo à raiz do projeto)
   candidates: 20             # D-096: top-k semântico antes do RRF
   rrf_k: 60                  # D-095: parâmetro k do RRF (Cormack 2009)
