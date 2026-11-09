@@ -984,6 +984,45 @@ class TestFooterAndEscaping:
         assert "<mark" in screen.panels.level1
 
 
+# --- Patch de tema claro e escopo de CSS (D-078, D-079) ---
+
+
+class TestThemePatch:
+    def test_build_app_has_column_with_ir_movies_app_id(self, service, cfg):
+        """Column com elem_id correto é o que o CSS usa como âncora (D-079)."""
+        demo = build_app(service, cfg)
+        columns = [b for b in demo.blocks.values() if isinstance(b, gr.Column)]
+        ids = [c.elem_id for c in columns]
+        assert "ir-movies-app" in ids
+
+    def test_css_fu_selectors_are_scoped_to_ir_movies_app(self):
+        """Nenhum seletor .fu-* existe sem o prefixo #ir-movies-app (D-079)."""
+        import re
+
+        from ir_movies.ui.styles import CSS
+
+        for rule_head in re.findall(r"[^{}]+(?=\s*\{)", CSS):
+            for selector in rule_head.split(","):
+                selector = selector.strip()
+                if ".fu-" in selector:
+                    assert selector.startswith("#ir-movies-app"), (
+                        f"seletor .fu-* sem escopo: {selector!r}"
+                    )
+
+    def test_force_light_js_contains_theme_and_light(self):
+        """FORCE_LIGHT_JS precisa checar e definir ?__theme=light (D-078)."""
+        from ir_movies.ui.styles import FORCE_LIGHT_JS
+
+        assert "__theme" in FORCE_LIGHT_JS
+        assert "light" in FORCE_LIGHT_JS
+
+    def test_force_light_js_only_reloads_when_not_light(self):
+        """FORCE_LIGHT_JS só recarrega a página quando ?__theme != 'light' (D-078)."""
+        from ir_movies.ui.styles import FORCE_LIGHT_JS
+
+        assert '!== "light"' in FORCE_LIGHT_JS
+
+
 # --- C10: a interface só conhece o contrato ---
 
 
