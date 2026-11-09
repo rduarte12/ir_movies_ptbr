@@ -113,6 +113,15 @@ def header_html(cfg: dict) -> str:
     return f'<div class="fu-header"><h1>{name}</h1><p>{html.escape(texts.TAGLINE)}</p></div>'
 
 
+def semantic_notice_html(service: SearchServiceProtocol) -> str:
+    """Aviso de etapa semântica ativa (D-100). String vazia quando inativa."""
+    if not service.semantic_active:
+        return ""
+    return (
+        f'<p class="fu-semantic-notice">{html.escape(texts.SEMANTIC_NOTICE)}</p>'
+    )
+
+
 def footer_html(service: SearchServiceProtocol) -> str:
     """Rodapé: atribuição da TMDB, aviso de log, versão e acervo (secao 1.6)."""
     return (

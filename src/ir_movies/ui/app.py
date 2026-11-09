@@ -84,6 +84,7 @@ def build_app(service: SearchServiceProtocol, cfg: dict) -> gr.Blocks:
             # dentro de ``launch()``, e ``build_app`` nunca lança (D-055, D-090).
             gr.HTML(f"<style>{CSS}</style>")
             gr.HTML(view.header_html(cfg))
+            gr.HTML(view.semantic_notice_html(service), elem_id="fu-semantic-notice")
 
             with gr.Row():
                 query_box = gr.Textbox(
