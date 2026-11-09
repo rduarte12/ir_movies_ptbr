@@ -682,6 +682,111 @@ R = autor do projeto; C = proposta técnica (sempre `proposta` até confirmaçã
   estilos só se apliquem ao escopo correto e não vençam o `.prose *` do Gradio.
 - **Origem:** C · **Status:** proposta
 
+### D-092 · 2026-11-08 · Etapa semântica opcional: revisão de D-005
+- **Contexto:** D-005 decidiu "sem embeddings" para a v1. A Sprint 9 adiciona recuperação
+  semântica **opcional** e controlada por config, sem remover nem alterar o TF-IDF.
+- **Decisão:** a etapa semântica é pré-filtro do TF-IDF, desligada por padrão
+  (`semantic.enabled: false`). Quando desligada, o comportamento é identico à v1. O
+  TF-IDF continua sendo o modelo de pontuação; a semântica só seleciona candidatos. A
+  Explicabilidade (3 níveis) permanece inalterada — ela descreve o TF-IDF, que continua sendo
+  calculado sobre os mesmos candidatos. Futuras versões podem ativar e refinar.
+- **Alternativas descartadas:** sempre ativa (remove o ponto de comparação e pode surpreender
+  o público na feira), substituição completa do TF-IDF (perde a Explicabilidade).
+- **Origem:** R (proposta do notebook) / C (redação) · **Status:** proposta
+
+### D-093 · 2026-11-08 · Modelo semântico: paraphrase-multilingual-MiniLM-L12-v2
+- **Decisão:** usar `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` (384 dims).
+  A revisão exata do commit do modelo é registrada em `config.yaml` (`semantic.revision`) depois
+  de rodar `scripts/build_embeddings.py` (campo vazio até lá). O modelo é carregado com a
+  revisão fixada para garantir reprodutibilidade offline.
+- **Alternativas descartadas:**
+  - `multilingual-e5-small`: exige prefixos "query:" e "passage:", tornando o texto do
+    documento diferente do que o TF-IDF indexa (D-094).
+  - EmbeddingGemma: mais pesado e licença mais restritiva.
+  - potion/model2vec: não contextual.
+  - LLM generativo: não aguenta no hardware da demo.
+- **Suporte offline:** após o primeiro download, o modelo fica no cache do Hugging Face.
+  `HF_HUB_OFFLINE=1` evita qualquer chamada de rede; o carregamento usa a revisão fixada.
+- **Origem:** C · **Status:** proposta
+
+### D-094 · 2026-11-08 · Texto dos documentos para embeddings = texto bruto do TF-IDF
+- **Decisão:** o texto passado ao encoder para gerar os vetores do corpus é exatamente
+  `document_text(movie)` (título + tagline + sinopse + gêneros, D-013), sem pré-processamento
+  adicional (sem stemming, sem remoção de stopwords). A etapa semântica recebe o texto tal qual
+  o snapshot_loader entrega ao TF-IDF. Os vetores são L2-normalizados, float32, na ordem das
+  linhas do snapshot (linha i = doc_id i).
+- **Motivo:** o modelo semântico já faz sua própria tokenização interna; aplicar o
+  pré-processamento do TF-IDF (stemming, normalização de acentos) antes do encoder degradaria
+  a qualidade semântica. Usar o mesmo texto simplifica o pipeline e elimina divergências.
+- **Origem:** C · **Status:** proposta
+
+### D-095 · 2026-11-08 · RRF com k = 60 e desempate pelo posto semântico
+- **Decisão:** `score_rrf(d) = Σ 1 / (k + rank_i(d))`, somando sobre os rankings semântico
+  e TF-IDF. `k = 60` (config `semantic.rrf_k`). O ranking TF-IDF contém só os candidatos com
+  TF-IDF > 0; candidatos com TF-IDF = 0 contribuem 0 por esse lado. Empate no score RRF:
+  vence o menor posto semântico (melhor recuperação semântica).
+- **Motivo:** k = 60 é o valor canônico da literatura de RRF (Cormack et al. 2009) e reduz
+  o peso de primeiros lugares muito bem ranqueados em apenas um sistema. O desempate pelo posto
+  semântico privilegia relevância contextual quando os dois sistemas concordam no score.
+- **Origem:** C · **Status:** proposta
+
+### D-096 · 2026-11-08 · MovieHit.score é o cosseno TF-IDF; ordem final é do RRF
+- **Contexto:** o invariante 3 do contrato (D-090) liga `hit.score` às contribuições por termo:
+  `sum(contributions) == hit.score`. A Explicabilidade é construída sobre esse invariante.
+  Com RRF, a ordem dos hits não é mais necessariamente a do score TF-IDF decrescente.
+- **Decisão:**
+  - `MovieHit.score` continua sendo o cosseno TF-IDF (invariante 3 preservado).
+  - Dois campos opcionais e aditivos são adicionados a `MovieHit`: `semantic_score: float | None`
+    e `rrf_score: float | None` (default `None`). Quando a etapa semântica está inativa,
+    ambos ficam `None`.
+  - A ordem de `SearchResult.hits` é: score TF-IDF decrescente quando a etapa semântica está
+    inativa; score RRF decrescente (desempate pelo posto semântico) quando ativa.
+  - O invariante "hits ordenados por score decrescente" (antes implícito) é **explicitamente
+    revisado** aqui: vale para o score TF-IDF quando semântica inativa, não quando ativa.
+  - `test_scores_are_descending` em `tests/test_contract.py` é atualizado para refletir isso:
+    testa a ordenação por score TF-IDF quando o serviço não tem etapa semântica.
+- **Origem:** C · **Status:** proposta
+
+### D-097 · 2026-11-08 · Falha suave: TF-IDF puro quando a etapa semântica não carrega
+- **Decisão:** se os vetores não existirem no disco, forem incompatíveis (snapshot_id, dimensão
+  ou modelo diferentes do config) ou o modelo não carregar, o serviço cai para TF-IDF puro,
+  registra um aviso claro no log do servidor (`logging.warning`) e prossegue normalmente.
+  A interface não exibe nenhum aviso nesse caso (o aviso semântico, D-100, só aparece quando
+  a etapa semântica está de fato ativa). A propriedade `service.semantic_active` devolve
+  `False` nesse caso.
+- **Motivo:** a demo não pode cair por causa de um arquivo de vetores ausente; o TF-IDF
+  sozinho já funciona e é a base explicável do sistema.
+- **Origem:** C · **Status:** proposta
+
+### D-098 · 2026-11-08 · Interruptor da etapa semântica exclusivamente por config
+- **Decisão:** `semantic.enabled` em `config.yaml` é o único ponto de controle. Não há novo
+  elemento na interface (botão, checkbox ou similar) para ativar/desativar a etapa semântica.
+  O público da feira não sabe da etapa semântica a não ser pelo aviso de D-100.
+- **Motivo:** simplicidade da interface (ui_spec.md secao 4: "Toggle de modelos" está fora
+  desta versão) e controle pelo autor antes da demo.
+- **Origem:** C · **Status:** proposta
+
+### D-099 · 2026-11-08 · Execução offline e reprodutibilidade do modelo
+- **Decisão:** o modelo é carregado com a revisão exata registrada em `config.yaml`
+  (`semantic.revision`). Após o primeiro download, o cache local do Hugging Face é suficiente.
+  Com `HF_HUB_OFFLINE=1`, o carregamento usa o cache sem chamadas de rede; se o cache não
+  existir, levanta exceção (falha suave de D-097). `scripts/build_embeddings.py` suporta
+  `HF_HUB_OFFLINE=1` e usa a revisão do config.
+- **Motivo:** a demo roda sem Wi-Fi; o autor deve baixar o modelo antes da feira com
+  `HF_HUB_OFFLINE=0` e depois testar com `HF_HUB_OFFLINE=1`.
+- **Origem:** C · **Status:** proposta
+
+### D-100 · 2026-11-08 · Aviso na interface quando a etapa semântica está ativa
+- **Decisão:** quando `service.semantic_active` é `True`, a interface exibe uma linha antes
+  da caixa de busca: "Primeiro, sua pergunta passa por uma IA que entende o significado."
+  Sem explicação adicional, sem link, sem menu. O aviso é renderizado como texto simples num
+  `gr.HTML` com classe `fu-semantic-notice`. Quando a etapa semântica está inativa, o
+  elemento não aparece.
+- **Motivo:** o público merece saber que há uma etapa de processamento antes do TF-IDF,
+  sem sobrecarregar a tela. O texto é deliberadamente curto: a Explicabilidade (3 níveis) já
+  cobre o TF-IDF em detalhe; a etapa semântica é só o filtro de candidatos.
+- **Origem:** C · **Status:** proposta
+
 ---
 
 ## Questões abertas
