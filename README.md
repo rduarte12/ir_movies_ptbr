@@ -1,63 +1,62 @@
-# Buscador de filmes em português (PT-BR)
+# FilmUSP — buscador de filmes em português que mostra como pensa
 
-Buscador didático de filmes, feito para a feira de extensão do ICMC-USP. A pessoa descreve um
-filme do seu jeito ("um tubarão assustador na praia", "robô que se apaixona") e o programa mostra
-**quais filmes combinam mais** com a frase e, principalmente, **por que**: quais palavras casaram,
-quanto cada uma pesou e como essas palavras viram um número.
+Projeto de demonstração para a feira de extensão do ICMC-USP. A pessoa descreve um filme do seu
+jeito ("um tubarão assustador na praia", "robô que se apaixona") e o FilmUSP mostra **quais
+filmes combinam mais** com a frase e, principalmente, **por que**: quais palavras casaram, quanto
+cada uma pesou e como essas palavras viram um número.
+
+**Autores:** Rafael Duarte, João Pedro Caetano e Lucas Waldrighi.
+
+[![Abrir no Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/rduarte12/ir_movies_ptbr/blob/main/notebooks/02_search_app.ipynb)
+· Apresentação: <https://rmduarte.com.br/feira/filmusp/>
 
 > Este produto usa a API da TMDB mas não é endossado nem certificado pela TMDB.
 
-## O que é
+## Como rodar no Google Colab (recomendado)
 
-- **Modelo:** TF-IDF com similaridade do cosseno. É determinístico: a mesma frase, no mesmo
-  acervo, dá sempre o mesmo resultado.
-- **Acervo:** filmes com sinopse em português, coletados da TMDB (veja [Dados](#dados)).
-- **Explicabilidade:** a tela mostra, ao mesmo tempo e para o filme selecionado, três níveis:
-  1. onde as palavras da busca aparecem na sinopse (destacadas);
-  2. quanto cada palavra pesou na pontuação (barras);
-  3. o passo a passo, das palavras ao número (palavras ignoradas, radicais, pesos e a soma que dá
-     a pontuação).
-- **Interface:** Gradio, em um notebook (Colab ou Jupyter local). Grade de pôsteres, detalhes do
-  filme e a seção de explicabilidade. O desenho está em [`docs/ui_spec.md`](docs/ui_spec.md).
-- **Fora desta versão:** BM25, embeddings, busca híbrida, modelos de linguagem, login. Há apenas
-  o ponto de extensão para reescrever a consulta (`Rewriter`), com a implementação identidade
-  (a consulta passa como veio).
+1. Clique em **Abrir no Colab**, acima. Abre o notebook `notebooks/02_search_app.ipynb`.
+2. No menu, **Ambiente de execução → Executar tudo**. Não precisa de GPU, login nem chave de API.
+3. Espere de 3 a 5 minutos na primeira vez. O notebook baixa este repositório, instala as
+   bibliotecas que faltam no Colab (`requirements-colab.txt`) e baixa o modelo de linguagem
+   (cerca de 470 MB).
+4. Na célula 4 aparece um link `https://….gradio.live`. Clique nele para abrir o app. O link
+   funciona enquanto o notebook estiver aberto.
 
-### Estado de verificação
+A célula 3 faz uma busca de teste e imprime os 5 primeiros filmes, para conferir que tudo
+funciona antes de abrir a tela.
 
-Esta seção descreve o que **ainda não foi verificado de ponta a ponta**. O autor deve apagá-la ou
-reduzi-la depois de fazer o ensaio descrito em
-[`docs/rehearsal_checklist.md`](docs/rehearsal_checklist.md).
+## Como funciona
 
-- Os testes automáticos (`python -m pytest`) cobrem coleta, pré-processamento, índice TF-IDF,
-  contrato do serviço de busca e o acervo mínimo de testes.
-- **Não verificado:** execução do notebook 02 no Colab, ensaio de 2 horas contínuas, execução
-  local pelo plano B e teste dos textos da tela com pessoas leigas.
-- O comportamento da interface descrito aqui segue `docs/ui_spec.md` e `docs/architecture.md`.
+A busca tem duas partes, e a tela explica a parte das palavras em detalhe.
 
-## Como rodar no Colab
+1. **Sentido.** Um modelo de linguagem
+   ([paraphrase-multilingual-MiniLM-L12-v2](https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2),
+   versão fixada no `config.yaml`) transforma cada sinopse num vetor de características com 384
+   números. Esses vetores foram calculados uma única vez e estão em `data/`. A frase da pessoa
+   vira outro vetor, e os 100 filmes de sentido mais próximo (cosseno) viram candidatos.
+2. **Palavras.** Entre os candidatos, um índice TF-IDF compara as palavras da frase com as da
+   sinopse (minúsculas, sem acento, sem palavras comuns, reduzidas à raiz). A nota de cada filme é
+   o cosseno entre os vetores TF-IDF, com os pesos de raridade calculados no acervo inteiro.
+3. **Combinação.** A ordem final junta as duas listas por *Reciprocal Rank Fusion* (RRF, k = 5).
+   A nota mostrada na tela continua sendo a do TF-IDF, para a explicação fechar a conta.
 
-O notebook do app é o `notebooks/02_search_app.ipynb`. Ele não usa a API da TMDB; só baixa os
-pôsteres do CDN da TMDB.
+Tudo é determinístico: a mesma frase, no mesmo acervo, dá sempre o mesmo resultado. Se o modelo
+de linguagem não carregar, o FilmUSP continua funcionando só com o TF-IDF.
 
-1. Abra o notebook no Colab, pelo GitHub:
-   `https://colab.research.google.com/github/rduarte12/ir_movies_ptbr/blob/main/notebooks/02_search_app.ipynb`
-2. Em **Ambiente de execução > Executar tudo**. Conforme o desenho em
-   [`docs/architecture.md`](docs/architecture.md) (seção 7), o notebook clona o repositório,
-   instala `requirements-app.txt` (veja [Versões](#versões-e-dependências)), carrega o acervo e
-   abre a interface.
-3. Meta de tempo, de um ambiente novo do Colab até a tela pronta: até 5 minutos, sem passos
-   manuais (meta de `docs/project_scope.md`; **ainda não medida**).
-4. O log de consultas fica no disco do Colab, que é apagado quando o ambiente é encerrado. Baixe o
-   arquivo de `logs/` antes de encerrar (veja [Privacidade](#privacidade)).
+**Explicabilidade.** Para o filme selecionado, a tela mostra três níveis ao mesmo tempo:
 
-Se o Colab cair durante uma demonstração, use o plano B local e o roteiro de contingência em
-[`docs/rehearsal_checklist.md`](docs/rehearsal_checklist.md).
+1. onde as palavras da busca aparecem na sinopse (destacadas);
+2. quanto cada palavra pesou na pontuação (barras);
+3. o passo a passo, das palavras ao número (palavras ignoradas, raízes, pesos e a soma que dá a
+   pontuação).
+
+O desenho da tela está em [`docs/ui_spec.md`](docs/ui_spec.md) e os contratos entre as partes em
+[`docs/architecture.md`](docs/architecture.md).
 
 ## Como rodar localmente (plano B)
 
-Requisito: **Python 3.13** (`>=3.13,<3.14`, a mesma versão do Colab). Os exemplos usam um
-ambiente virtual (`venv`), que já vem com o Python.
+Requisito: **Python 3.13** (`>=3.13,<3.14`) e o PyTorch para CPU, que não está nos arquivos de
+requirements (instale pela página oficial do PyTorch, para o seu sistema).
 
 **Windows (PowerShell):**
 
@@ -79,55 +78,58 @@ source .venv/bin/activate
 python -m pip install -r requirements-app.txt
 ```
 
-Depois, abra o notebook `notebooks/02_search_app.ipynb` em um Jupyter (Notebook, JupyterLab ou
-o editor que você usar) com o ambiente `.venv` como kernel, e execute todas as células.
+Depois, abra `notebooks/02_search_app.ipynb` num Jupyter com o ambiente `.venv` como kernel e
+execute todas as células. O Jupyter não está nos arquivos de requirements; instale à parte se
+precisar (por exemplo, `python -m pip install jupyterlab`).
 
-Observações:
+**Uso sem internet (feira):** na primeira execução, com internet, o projeto baixa a lista de
+palavras comuns do NLTK e o modelo de linguagem; os dois ficam em cache na máquina. Depois disso,
+defina `HF_HUB_OFFLINE=1` para rodar sem internet. Os pôsteres vêm do servidor de imagens da TMDB;
+sem internet eles não aparecem, mas a busca continua funcionando.
 
-- **Jupyter não está em nenhum dos arquivos de requirements** do projeto. Instale à parte
-  (por exemplo, `python -m pip install jupyterlab`) se ainda não o tiver. A versão não é fixada
-  pelo projeto.
-- Na primeira execução, o pré-processamento baixa a lista de palavras comuns (*stopwords*) do
-  NLTK. Isso exige internet **uma vez**; depois fica em cache na máquina. Para o plano B em um
-  local sem internet, faça uma execução prévia com internet.
-- Os pôsteres vêm do CDN da TMDB. Sem internet, os pôsteres não aparecem (a busca continua
-  funcionando, porque o acervo está no repositório).
-
-### Variável `IR_MOVIES_NO_LAUNCH`
-
-Quando vale exatamente `1`, o notebook monta a interface mas **não** abre o servidor. É o que
-permite testar o notebook de forma automática. No uso normal, deixe a variável sem definir.
+**Variável `IR_MOVIES_NO_LAUNCH`:** quando vale exatamente `1`, o notebook monta a interface mas
+não abre o servidor. É o que os testes automáticos usam. No uso normal, deixe sem definir.
 
 ## Versões e dependências
 
-Todas as bibliotecas têm versão exata fixada (`==`). Há três arquivos:
+| Arquivo | Para que serve |
+|---|---|
+| `requirements-colab.txt` | Colab: só o que o ambiente do Colab não traz ou traz em versão incompatível (gradio, Unidecode, sentence-transformers, transformers). numpy, pandas, scikit-learn, nltk, pyarrow e torch vêm do próprio Colab. |
+| `requirements-app.txt` | Plano B local (notebook 02), com todas as versões fixadas (`==`). |
+| `requirements-collect.txt` | Notebook 01 (coleta na TMDB), só para recoletar os dados. |
+| `requirements-dev.txt` | Desenvolvimento: os dois anteriores mais pytest, ruff, jupytext, nbstripout e qrcode. |
 
-| Arquivo | Para que serve | Quem instala |
-|---|---|---|
-| `requirements-app.txt` | Notebook 02 (busca e interface): scikit-learn, numpy, nltk, Unidecode, pandas, pyarrow, PyYAML, python-dotenv, gradio | Colab e plano B local |
-| `requirements-collect.txt` | Notebook 01 (coleta na TMDB): requests, tenacity, pandas, pyarrow, PyYAML, python-dotenv | Máquina local, só para recoletar os dados |
-| `requirements-dev.txt` | Desenvolvimento: inclui os dois acima mais pytest, ruff, jupytext e nbstripout | Quem for alterar o código |
-
-Python: `>=3.13,<3.14`.
+Python local: `>=3.13,<3.14`. No Colab, vale o Python do próprio Colab; o código também roda no
+Python 3.12. O PyTorch não é fixado pelo projeto (os vetores foram gerados com a versão
+registrada em `data/embeddings_*.json`).
 
 ## Dados
 
 - **Origem:** [TMDB](https://www.themoviedb.org/) (The Movie Database), pela API oficial, com
   `language=pt-BR`.
-- **Seleção:** os 20 mil filmes mais populares do export diário de IDs da TMDB (exceto conteúdo
-  adulto) são consultados; ficam os que têm sinopse em português com pelo menos 5 palavras e pelo
-  menos 2 votos.
-- **Snapshot versionado** em `data/`: `movies_ptbr_20261106.parquet` e `snapshot_meta.json`
-  (`snapshot_id` `20261106`). Tem **8.002 filmes** e é o que o notebook 02 lê; a lista de colunas
-  está em [`docs/architecture.md`](docs/architecture.md) (seção 4). O `snapshot_meta.json`
-  registra filtros, contagens e rejeições por motivo.
-- **Texto indexado:** título + tagline + sinopse + gêneros.
-- **Pôsteres:** não são baixados nem guardados no repositório; a interface usa as URLs do CDN da
-  TMDB.
+- **Seleção:** os filmes mais populares do export diário de IDs da TMDB (exceto conteúdo adulto)
+  são consultados; ficam os que têm sinopse em português com pelo menos 5 palavras e pelo menos
+  2 votos.
+- **Acervo versionado** em `data/`: `movies_ptbr_20261106.parquet` e `snapshot_meta.json`
+  (`snapshot_id` `20261106`), com **8.002 filmes**. O `snapshot_meta.json` registra filtros,
+  contagens e rejeições por motivo.
+- **Vetores de características** em `data/embeddings_*.npy` (8.002 × 384, float32) e
+  `data/embeddings_*.json` (modelo, revisão, versões das bibliotecas). Para gerar de novo:
+  `python scripts/build_embeddings.py`.
+- **Texto indexado:** título + tagline + sinopse + gêneros (o mesmo texto nas duas partes da
+  busca).
+- **Pôsteres:** não são guardados no repositório; a interface usa as URLs do servidor de imagens
+  da TMDB.
 - **Recoletar (opcional, exige conta na TMDB):** instale `requirements-collect.txt`, copie
-  `.env.example` para `.env` e preencha `TMDB_READ_ACCESS_TOKEN` com o seu token de leitura,
-  depois execute `notebooks/01_collect_tmdb.ipynb`. O arquivo `.env` nunca é versionado. Uma nova
-  coleta gera um novo `snapshot_id`.
+  `.env.example` para `.env`, preencha `TMDB_READ_ACCESS_TOKEN` e execute
+  `notebooks/01_collect_tmdb.ipynb`. O `.env` nunca é versionado. Uma nova coleta gera um novo
+  `snapshot_id` e exige gerar os vetores de novo.
+
+## Apresentação
+
+A apresentação interativa do projeto está publicada em <https://rmduarte.com.br/feira/filmusp/>.
+O código-fonte, os dados que ela usa e a versão em PDF ficam em [`site/`](site/README.md), com as
+instruções para gerar de novo.
 
 ## Privacidade
 
@@ -143,27 +145,22 @@ estão em [`docs/architecture.md`](docs/architecture.md) (seção 5).
 Com o ambiente de desenvolvimento (`python -m pip install -r requirements-dev.txt`):
 
 ```
-python -m pytest              # testes automáticos (sem rede, depois do primeiro download das stopwords)
-python -m ruff check .        # lint
-python -m ruff format .        # formatação
-python -m jupytext --sync notebooks/*.py   # sincroniza .py <-> .ipynb
-```
-
-Para gerar de novo o acervo mínimo usado nos testes (30 filmes, derivado do snapshot real):
-
-```
-python scripts/make_mini_snapshot.py
+python -m pytest                            # testes automáticos
+python -m ruff check .                      # lint
+python -m ruff format .                     # formatação
+python -m jupytext --sync notebooks/*.py    # sincroniza .py <-> .ipynb
 ```
 
 ## Estrutura do repositório
 
 ```
 config.yaml              parâmetros (nada de números mágicos no código)
-data/                    snapshot versionado (parquet + meta)
+data/                    acervo e vetores de características, versionados
 docs/                    escopo, arquitetura, interface, decisões, plano e diários
 notebooks/               01 (coleta) e 02 (app), em par .py (jupytext) e .ipynb
-scripts/                 utilitários (acervo mínimo de testes)
-src/ir_movies/           a lógica: coleta, pré-processamento, índice, busca, explicação, interface
+scripts/                 vetores, acervo mínimo de testes, latência e apresentação
+site/                    apresentação interativa (fonte, dados, HTML final e PDF)
+src/ir_movies/           a lógica: coleta, pré-processamento, índices, busca, explicação, interface
 tests/                   testes e fixtures
 ```
 

@@ -1,0 +1,8 @@
+# Colab: só o que o ambiente padrão do Colab não traz, ou traz em versão incompatível.
+# numpy, pandas, scikit-learn, pyarrow, nltk, PyYAML e torch vêm do próprio Colab.
+# Local (plano B): use requirements-app.txt, com todas as versões fixadas.
+
+gradio==6.31.0
+Unidecode==1.4.0
+sentence-transformers==6.2.0
+transformers==5.22.2

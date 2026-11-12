@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light only">
+<title>FilmUSP · um buscador de filmes que mostra como pensa</title>
+<meta name="description" content="Apresentação do FilmUSP, buscador de filmes em português com explicabilidade, feito para a feira de extensão do ICMC-USP.">
+<style id="fu-ui-css">/*__UI_CSS__*/</style>
+<style>/*__PRESENTATION_CSS__*/</style>
+</head>
+<body>
+<div id="deck" class="deck" aria-live="polite">
+
+<!-- 1 · Capa -->
+<section class="slide slide-cover" data-title="Capa">
+  <div class="cover-grid">
+    <div>
+      <p class="kicker">Feira de extensão · ICMC-USP · 2026</p>
+      <h1 class="cover-title">FilmUSP</h1>
+      <p class="cover-sub">Um buscador de filmes em português que mostra <em>como pensa</em>.</p>
+      <p class="cover-author">Rafael Duarte, João Pedro Caetano e Lucas Waldrighi</p>
+      <p class="cover-links">
+        <a href="https://github.com/rduarte12/ir_movies_ptbr">github.com/rduarte12/ir_movies_ptbr</a>
+      </p>
+      <p class="hint screen-only">Use ← → (ou deslize) para navegar.</p>
+    </div>
+    <div class="cover-demo" aria-hidden="true">
+      <div class="cover-query">um tubarão assustador na praia</div>
+      <div class="cover-words" id="cover-words"></div>
+      <div class="cover-arrow">↓</div>
+      <div class="cover-posters" id="cover-posters"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 · Acervo e como usar -->
+<section class="slide" data-title="Mais de 8 mil filmes">
+  <h2>Mais de 8 mil filmes para buscar</h2>
+  <div class="two-col">
+    <div>
+      <div class="stats" id="stats"></div>
+      <p class="small">Os filmes vêm do The Movie Database (TMDB). Entre os mais populares, ficaram os que têm resumo (sinopse) em português.</p>
+    </div>
+    <div>
+      <h3>Como usar</h3>
+      <ol class="flow">
+        <li><span>1</span><div>Descreva um filme <strong>do seu jeito</strong>, ou toque num exemplo.</div></li>
+        <li><span>2</span><div>Veja os pôsteres, do mais ao menos parecido com a sua frase.</div></li>
+        <li><span>3</span><div>Toque num pôster para ver os detalhes do filme.</div></li>
+        <li><span>4</span><div>Logo abaixo, descubra <strong>por que</strong> ele apareceu.</div></li>
+      </ol>
+      <div class="mini-grid" id="mini-grid"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 · Pré-processamento (widget A) -->
+<section class="slide" data-title="Como a máquina lê a sua frase">
+  <h2>Como a máquina lê a sua frase</h2>
+  <div class="query-picker" data-picker="pipeline"></div>
+  <div class="pipeline" id="pipeline"></div>
+</section>
+
+<!-- 4 · Raridade (widget B) -->
+<section class="slide" data-title="Palavras raras pesam mais">
+  <h2>Palavras raras pesam mais</h2>
+  <div class="two-col col-60">
+    <div>
+      <p class="lead small-lead">Uma palavra que aparece em quase todo filme, como “vida”, ajuda pouco. Uma palavra rara, como “tubarão”, é uma pista forte. Por isso ela vale mais pontos.</p>
+      <label class="word-input">Teste uma palavra
+        <input id="rarity-input" type="text" list="rarity-list" autocomplete="off" spellcheck="false" value="tubarão">
+      </label>
+      <datalist id="rarity-list"></datalist>
+      <div class="chips" id="rarity-presets"></div>
+      <div class="rarity-card" id="rarity-card"></div>
+    </div>
+    <div>
+      <div class="scale" id="rarity-scale"></div>
+      <div class="formula">
+        <div>idf = ln( (1 + N) / (1 + df) ) + 1</div>
+        <p class="small">Para os curiosos: N é o total de filmes e df é em quantos filmes a palavra aparece. Quanto menos filmes, maior o peso (idf).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 · Cosseno (widget C) -->
+<section class="slide" data-title="Quão parecidas são a frase e a sinopse?">
+  <h2>Quão parecidas são a frase e a sinopse?</h2>
+  <div class="two-col">
+    <div>
+      <p class="lead small-lead">O buscador transforma a sua frase e cada sinopse em listas de pesos, um por palavra. Essas listas são <strong>vetores</strong>, que dá para desenhar como setas. Quanto mais as setas apontam para o mesmo lado, mais parecidos são os textos. Essa medida se chama <strong>cosseno</strong>.</p>
+      <div class="sliders" id="cos-sliders"></div>
+      <div class="cos-table" id="cos-table"></div>
+    </div>
+    <div class="cos-figure">
+      <svg id="cos-svg" viewBox="0 0 360 360" role="img" aria-label="Dois vetores e o ângulo entre eles"></svg>
+      <p class="small center">Mexa nos controles. Aqui são só duas palavras, para caber no desenho; no FilmUSP, cada seta tem uma direção para cada palavra conhecida (mais de 20 mil).</p>
+    </div>
+  </div>
+</section>
+
+<!-- 6 · Explicabilidade (widget D) -->
+<section class="slide" data-title="Por que este filme apareceu?">
+  <h2>Por que este filme apareceu?</h2>
+  <div class="query-picker" data-picker="explain"></div>
+  <div class="explain-films" id="explain-films"></div>
+  <div class="explain-body fu-embed" id="ir-movies-app">
+    <div class="explain-col" id="explain-left"></div>
+    <div class="explain-col" id="explain-right"></div>
+  </div>
+</section>
+
+<!-- 7 · Significado (widget G) -->
+<section class="slide" data-title="Quando as palavras não bastam">
+  <h2>Quando as palavras não bastam</h2>
+  <div class="meaning-intro">
+    <p class="small-lead">Contar palavras iguais tem limite: quem procura “rato cozinheiro” não acha uma sinopse que fala em “ratinho chef”. Por isso, um <strong>modelo de linguagem</strong> transforma cada sinopse em um <strong>vetor de características</strong>: <strong id="emb-dim">384</strong> números que resumem o sentido do texto. A sua frase vira outro vetor, e o FilmUSP procura as sinopses de sentido mais próximo.</p>
+  </div>
+  <div class="query-picker" data-picker="meaning"></div>
+  <div class="meaning-cols" id="meaning-cols"></div>
+  <p class="meaning-note" id="meaning-note"></p>
+</section>
+
+<!-- 8 · RRF (widget H) -->
+<section class="slide" data-title="Juntando palavras e sentido">
+  <h2>Juntando palavras e sentido</h2>
+  <div class="rrf-steps" id="rrf-steps"></div>
+  <div class="rrf-body">
+    <div class="rrf-controls">
+      <div class="query-picker vertical" data-picker="rrf"></div>
+      <label class="k-slider">Mexa no k: <strong id="rrf-k-value"></strong>
+        <input id="rrf-k" type="range" min="1" max="100" step="1">
+      </label>
+      <div class="formula small-formula">pontos = 1/(k + posição no sentido) + 1/(k + posição nas palavras)</div>
+      <p class="small" id="rrf-k-note"></p>
+    </div>
+    <div class="rrf-table-wrap"><table class="rrf-table" id="rrf-table"></table></div>
+  </div>
+</section>
+
+<!-- 9 · Arquitetura -->
+<section class="slide" data-title="Por dentro do FilmUSP">
+  <h2>Por dentro do FilmUSP</h2>
+  <div class="arch">
+    <svg id="arch-svg" viewBox="0 0 900 430" role="img" aria-label="Diagrama da arquitetura do FilmUSP"></svg>
+    <div class="arch-detail" id="arch-detail"></div>
+  </div>
+</section>
+
+<!-- 10 · Escolhas -->
+<section class="slide" data-title="O que guiou o projeto">
+  <h2>O que guiou o projeto</h2>
+  <div class="choices" id="choices"></div>
+</section>
+
+<!-- 11 · Encerramento -->
+<section class="slide slide-end" data-title="Obrigado">
+  <div class="end-grid">
+    <div>
+      <h2 class="end-title">Obrigado!</h2>
+      <p class="lead">FilmUSP · um buscador de filmes que mostra como pensa. Experimente na feira!</p>
+      <p>Código, dados e documentação:<br><a href="https://github.com/rduarte12/ir_movies_ptbr">github.com/rduarte12/ir_movies_ptbr</a></p>
+      <p>Esta apresentação:<br><a href="https://rmduarte.com.br/feira/filmusp/">rmduarte.com.br/feira/filmusp</a></p>
+      <p class="small">Rafael Duarte, João Pedro Caetano e Lucas Waldrighi · ICMC-USP</p>
+    </div>
+    <div class="qr-box">
+      <div class="qr">/*__QR_SVG__*/</div>
+      <p class="small center">rmduarte.com.br/feira/filmusp</p>
+    </div>
+  </div>
+  <p class="tmdb-box" id="tmdb-final"></p>
+</section>
+
+</div>
+
+<nav class="controls screen-only" aria-label="Navegação">
+  <button id="prev" type="button" aria-label="Slide anterior">←</button>
+  <span id="counter">1 / 11</span>
+  <button id="next" type="button" aria-label="Próximo slide">→</button>
+</nav>
+
+<script type="application/json" id="fu-data">__DATA_JSON__</script>
+<script>window.FU_PLACEHOLDER = "__PLACEHOLDER_URI__";</script>
+<script>/*__PRESENTATION_JS__*/</script>
+</body>
+</html>

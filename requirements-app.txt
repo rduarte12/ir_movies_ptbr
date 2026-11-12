@@ -1,4 +1,4 @@
-# Dependências do notebook 02 (busca + UI) — Colab instala este arquivo.
+# Dependências do notebook 02 (busca + UI) no plano B local. O Colab usa requirements-colab.txt.
 # Decisão: D-021. Versões fixadas com Python 3.13.
 
 scikit-learn==1.9.1

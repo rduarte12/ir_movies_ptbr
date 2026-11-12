@@ -14,29 +14,31 @@
 # ---
 
 # %% [markdown]
-# # 02 — App de busca
+# # FilmUSP — buscador de filmes que mostra como pensa
 #
-# Interface Gradio do buscador de filmes PT-BR.
-# Lógica em `src/ir_movies/`. Este notebook apenas orquestra.
+# Descreva um filme do seu jeito ("um tubarão assustador na praia") e veja os filmes que mais
+# combinam e **por que** cada um apareceu.
 #
-# **Seções:**
-# 1. Setup (funciona no Colab e localmente)
-# 2. Serviço de busca (ponto de injeção)
-# 3. Interface
-# 4. Log da feira (opcional, só no Colab)
+# ## Como rodar no Google Colab
 #
-# Para montar a tela sem abrir servidor — é o que os testes fazem —, defina
-# `IR_MOVIES_NO_LAUNCH=1` no ambiente antes de executar (D-090).
+# 1. Menu **Ambiente de execução → Executar tudo** (não precisa de GPU).
+# 2. Espere de 3 a 5 minutos na primeira vez: o notebook baixa o projeto, instala as
+#    bibliotecas que faltam no Colab e baixa o modelo de linguagem (cerca de 470 MB).
+# 3. Na célula 4 aparece um link `https://….gradio.live`. Clique nele para abrir o app.
+#
+# Nada é pedido durante a execução: não há login nem chave de API.
+#
+# O mesmo notebook roda num Jupyter local (veja o `README.md`).
 
 # %% [markdown]
-# ---
-# ## Parte 1 — Setup
+# ## 1. Preparar o ambiente
 #
-# No Colab: clona o repositório e instala `requirements-app.txt`.
-# Localmente: não há nada a instalar, só o caminho do pacote a ajustar.
+# No Colab, baixa o repositório e instala `requirements-colab.txt`. Num Jupyter local, só ajusta
+# o caminho do pacote (as bibliotecas vêm de `requirements-app.txt`).
 
 # %%
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -48,29 +50,43 @@ except ImportError:
     IN_COLAB = False
 
 REPO_URL = "https://github.com/rduarte12/ir_movies_ptbr.git"
-REPO_NAME = "ir_movies_ptbr"
+
+
+def run(cmd: list[str]) -> None:
+    """Executa um comando e para o notebook com a mensagem de erro, se ele falhar."""
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        raise RuntimeError(f"Falhou: {' '.join(cmd)}\n{result.stdout}\n{result.stderr}")
+
 
 if IN_COLAB:
-    repo_dir = Path("/content") / REPO_NAME
-    if not repo_dir.exists():
-        os.system(f"git clone --depth 1 {REPO_URL} {repo_dir}")
-    os.chdir(repo_dir)
-    os.system("pip install -q -r requirements-app.txt")
-    project_root = repo_dir
+    project_root = Path("/content/ir_movies_ptbr")
+    if project_root.exists():
+        run(["git", "-C", str(project_root), "pull", "--ff-only"])
+    else:
+        run(["git", "clone", "--depth", "1", REPO_URL, str(project_root)])
+    os.chdir(project_root)
+    print("Instalando bibliotecas (1 a 2 minutos)...")
+    run([sys.executable, "-m", "pip", "install", "-q", "-r", "requirements-colab.txt"])
 else:
-    # Notebook roda em notebooks/; a raiz do projeto é o diretório acima.
+    # Num Jupyter local, o notebook roda em notebooks/; a raiz do projeto é a pasta acima.
     project_root = Path.cwd().parent if Path.cwd().name == "notebooks" else Path.cwd()
 
-src_dir = project_root / "src"
-if str(src_dir) not in sys.path:
-    sys.path.insert(0, str(src_dir))
+if str(project_root / "src") not in sys.path:
+    sys.path.insert(0, str(project_root / "src"))
 
-print(f"Colab: {IN_COLAB}")
-print(f"Raiz do projeto: {project_root}")
+print(f"Rodando no Colab: {IN_COLAB}")
+print(f"Pasta do projeto: {project_root}")
+
+# %% [markdown]
+# ## 2. Carregar os filmes e o buscador
+#
+# Lê o acervo (8 mil filmes com sinopse em português), monta o índice de palavras (TF-IDF) e
+# carrega o modelo de linguagem com os vetores de características já calculados. Na primeira
+# vez, o modelo é baixado da internet. Se ele não carregar, o buscador continua funcionando só
+# com as palavras.
 
 # %%
-# Os imports do pacote vêm depois do setup, de propósito: no Colab o
-# repositório só existe a partir da célula anterior.
 import ir_movies  # noqa: E402
 from ir_movies.config import load_config  # noqa: E402
 from ir_movies.ui.app import build_app  # noqa: E402
@@ -79,99 +95,70 @@ from ir_movies.ui.styles import FORCE_LIGHT_JS  # noqa: E402
 
 cfg = load_config(project_root / "config.yaml")
 
-print(f"Versão do app: {ir_movies.__version__}")
-print(f"Nome do app:   {cfg['ui']['app_name']}")
-print(f"Resultados:    {cfg['search']['top_k']} por busca")
-
-# %% [markdown]
-# ---
-# ## Parte 2 — Serviço de busca
-#
-# ### PONTO DE INJEÇÃO
-#
-# A interface depende **somente** de `SearchServiceProtocol` e recebe o serviço
-# por injeção (D-090): não conhece o índice TF-IDF nem o arquivo de log. Por
-# isso o serviço é montado aqui, fora da interface, e não dentro dela.
-#
-# Duas formas de fornecê-lo, nesta ordem:
-#
-# 1. definir a variável `service` **antes** de executar a célula abaixo — é o
-#    que um teste automatizado faz, com um serviço sobre um acervo pequeno;
-# 2. deixar a célula montar o `SearchService` real, que lê o snapshot de `data/`.
-#
-# Carregar o snapshot e construir o índice leva alguns segundos. É a única
-# etapa lenta do notebook: a busca em si é instantânea.
-
-# %%
+# Um teste automático pode entregar o próprio serviço antes desta célula (D-090).
 if "service" not in globals():
     from ir_movies.query.service import SearchService
 
-    # from_config tenta carregar a etapa semântica quando semantic.enabled = true
-    # e cai para TF-IDF puro com aviso no log se os vetores não existirem (D-097).
     service = SearchService.from_config(project_root / "config.yaml")
 
-print(f"Acervo:  {service.snapshot_id}")
-print(f"Versão:  {service.app_version}")
+modo = "palavras + sentido" if getattr(service, "semantic_active", False) else "só palavras"
+print(f"FilmUSP {ir_movies.__version__} · acervo {service.snapshot_id} · busca por {modo}")
 
 # %% [markdown]
-# Conferência rápida antes de abrir a tela: uma busca de exemplo, sem registrar
-# nada no log (sem `session_id`, o serviço não registra — regra 4 de D-090).
+# ## 3. Uma busca de teste
+#
+# Confere que tudo funciona antes de abrir a tela. Esta busca não entra no registro de uso.
 
 # %%
 exemplo = cfg["ui"]["examples"][0]
 previa = service.search(exemplo)
 
-print(f'Pergunta: "{exemplo}"')
-print(f"Resultados: {len(previa.hits)} em {previa.latency_ms:.1f} ms")
+print(f'Busca: "{exemplo}" · {len(previa.hits)} resultados em {previa.latency_ms:.0f} ms\n')
 for hit in previa.hits[:5]:
     filme = service.get_movie(hit.movie_id)
     pontuacao = format_score(hit.score, cfg["ui"]["score_decimals"])
-    print(f"  {hit.rank:>2}. {filme.title} ({filme.year}) · {pontuacao}")
+    print(f"  {hit.rank}º  {filme.title} ({filme.year})  · pontuação {pontuacao}")
 
 # %% [markdown]
-# ---
-# ## Parte 3 — Interface
+# ## 4. Abrir o app
 #
-# `build_app` monta e devolve o objeto Gradio; quem lança é este notebook, e só
-# quando `IR_MOVIES_NO_LAUNCH` não vale exatamente `"1"` (D-090). É isso que
-# permite testar a montagem da tela sem abrir servidor nenhum.
+# Clique no link `https://….gradio.live` que aparece abaixo. Ele fica ativo enquanto este
+# notebook estiver aberto.
 
 # %%
 demo = build_app(service, cfg)
 
+# IR_MOVIES_NO_LAUNCH=1 monta a tela sem abrir servidor; é o que os testes usam (D-090).
 if os.environ.get("IR_MOVIES_NO_LAUNCH") != "1":
     demo.launch(share=True, inline=False, js=FORCE_LIGHT_JS)
 else:
-    print("Tela montada; lançamento desativado por IR_MOVIES_NO_LAUNCH=1.")
+    print("Tela montada; abertura desativada por IR_MOVIES_NO_LAUNCH=1.")
 
 # %% [markdown]
-# ---
-# ## Parte 4 — Log da feira (opcional)
+# ## 5. (Opcional) Baixar o registro de uso
 #
-# O log fica no disco da máquina que roda o notebook (Q-001). No Colab, a
-# célula abaixo compacta a pasta `logs/` e oferece o download — o arquivo
-# **tem de ser baixado antes de a sessão do Colab terminar**, senão o disco é
-# descartado com ele. Fora do Colab, a célula só diz onde os arquivos estão.
-#
-# O log é anônimo: não há IP, identificação de navegador nem dado pessoal
-# nenhum (D-008).
+# Só para quem apresentou o app na feira. O registro é anônimo (sem nenhum dado pessoal) e fica
+# no disco do Colab, que é apagado ao fechar a sessão. Para baixar, troque `BAIXAR_REGISTRO`
+# para `True` e execute esta célula.
 
 # %%
+BAIXAR_REGISTRO = False
+
 logs_dir = project_root / cfg["logging"]["dir"]
 arquivos = sorted(logs_dir.glob("*.jsonl")) if logs_dir.is_dir() else []
 
-if not arquivos:
-    print(f"Nenhum log em {logs_dir}.")
+if not BAIXAR_REGISTRO:
+    print(f"{len(arquivos)} arquivo(s) de registro em {logs_dir}.")
+elif not arquivos:
+    print("Ainda não há registro para baixar.")
 elif IN_COLAB:
     import shutil
 
     from google.colab import files  # noqa: PLC0415
 
-    pacote = shutil.make_archive(str(project_root / "logs_feira"), "zip", logs_dir)
-    print(f"{len(arquivos)} arquivo(s) compactado(s) em {pacote}")
+    pacote = shutil.make_archive(str(project_root / "registro_feira"), "zip", logs_dir)
     files.download(pacote)
 else:
-    total = sum(1 for arquivo in arquivos for _ in arquivo.open(encoding="utf-8"))
-    print(f"{len(arquivos)} arquivo(s) de log em {logs_dir}, {total} evento(s).")
+    print("Fora do Colab, os arquivos já estão nesta pasta:")
     for arquivo in arquivos:
-        print(f"  {arquivo.name}")
+        print(f"  {arquivo}")
